@@ -33,6 +33,15 @@ const appointmentSchema = new mongoose.Schema(
       type: String,
       maxlength: 500,
     },
+    mode: {
+      type: String,
+      enum: ["offline_visit", "online"],
+      required: true,
+    },
+    meetingLink: {
+      type: String,
+      default: null,
+    },
   },
   { timestamps: true }
 );
