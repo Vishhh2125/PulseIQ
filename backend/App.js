@@ -25,9 +25,11 @@ app.use(cookieParser());
 // ─── Routes ───────────────────────────────────────────────────────────────────
 import userRouter from "./routes/user.route.js";
 import doctorRouter from "./routes/doctor.route.js";
+import appointmentRouter from "./routes/appointment.route.js";
 
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/doctors", doctorRouter);
+app.use("/api/v1/appointments", appointmentRouter);
 
 app.get("/test", (req, res) => {
   res.send("PulseIQ API is working");

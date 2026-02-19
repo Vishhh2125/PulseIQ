@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import User from "../models/user.model.js";
 import Doctor from "../models/doctor.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -66,31 +67,49 @@ const registerDoctor = asyncHandler(async (req, res) => {
   const existingLicense = await Doctor.findOne({ licenseNumber });
   if (existingLicense) throw new ApiError(400, "License number already registered");
 
-  // Create User
-  const user = await User.create({ username, email, password, usertype: "doctor" });
-
-  // Create Doctor Profile
-  const doctor = await Doctor.create({
-    userId: user._id,
-    specialization,
-    licenseNumber,
-    experience: experience || 0,
-    clinicAddress,
-    clinicTiming,
-    consultationFee: consultationFee || 0,
-    qualifications: qualifications || [],
-    bio: bio || "",
-  });
-
-  return res
-    .status(201)
-    .json(
-      new ApiResponse(
-        201,
-        { userId: user._id, doctorId: doctor._id },
-        "Doctor registered successfully"
-      )
+  // ── Atomic transaction: both User + Doctor created or neither ──
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const [user] = await User.create(
+      [{ username, email, password, usertype: "doctor" }],
+      { session }
     );
+
+    const [doctor] = await Doctor.create(
+      [
+        {
+          userId: user._id,
+          specialization,
+          licenseNumber,
+          experience: experience || 0,
+          clinicAddress,
+          clinicTiming,
+          consultationFee: consultationFee || 0,
+          qualifications: qualifications || [],
+          bio: bio || "",
+        },
+      ],
+      { session }
+    );
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return res
+      .status(201)
+      .json(
+        new ApiResponse(
+          201,
+          { userId: user._id, doctorId: doctor._id },
+          "Doctor registered successfully"
+        )
+      );
+  } catch (err) {
+    await session.abortTransaction();
+    session.endSession();
+    throw err; // re-throw so errorHandler sends proper response
+  }
 });
 
 // ─── Register User (Legacy) ──────────────────────────────────────────────────
