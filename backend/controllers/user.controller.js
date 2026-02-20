@@ -5,7 +5,6 @@ import Patient from "../models/patient.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
-import jwt from "jsonwebtoken";
 
 // ─── Register Patient ───────────────────────────────────────────────────────
 const registerPatient = asyncHandler(async (req, res) => {
@@ -188,11 +187,9 @@ const loginUser = asyncHandler(async (req, res) => {
   const passwordMatch = await user.isPasswordCorrect(password);
   if (!passwordMatch) throw new ApiError(401, "Invalid password");
 
-  const accessToken = user.generateAccessToken();
-  const refreshToken = user.generateRefreshToken();
+  const token = user.generateAccessToken();
 
-  // Persist refresh token in the token field
-  user.token = refreshToken;
+  user.token = token;
   await user.save({ validateBeforeSave: false });
 
   const { password: _pw, token: _tk, ...safeUser } = user.toObject();
@@ -204,13 +201,9 @@ const loginUser = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .cookie("refreshToken", refreshToken, cookieOptions)
+    .cookie("token", token, cookieOptions)
     .json(
-      new ApiResponse(
-        200,
-        { user: safeUser, accessToken },
-        "Logged in successfully"
-      )
+      new ApiResponse(200, { user: safeUser }, "Logged in successfully")
     );
 });
 
@@ -219,51 +212,10 @@ const logoutUser = asyncHandler(async (req, res) => {
   // req.user is set by auth middleware
   await User.findByIdAndUpdate(req.user._id, { token: null });
 
-  res.clearCookie("refreshToken");
+  res.clearCookie("token");
   return res
     .status(200)
     .json(new ApiResponse(200, {}, "Logged out successfully"));
-});
-
-// ─── Refresh Access Token ─────────────────────────────────────────────────────
-const refreshAccessToken = asyncHandler(async (req, res) => {
-  const incomingRefreshToken = req.cookies?.refreshToken;
-  if (!incomingRefreshToken)
-    throw new ApiError(401, "Refresh token not found, please login again");
-
-  try {
-    const decoded = jwt.verify(
-      incomingRefreshToken,
-      process.env.REFRESH_TOKEN_SECRET
-    );
-
-    const user = await User.findById(decoded._id);
-    if (!user) throw new ApiError(401, "Invalid refresh token");
-
-    // Validate stored token matches
-    if (user.token !== incomingRefreshToken)
-      throw new ApiError(401, "Refresh token is expired or already used");
-
-    const accessToken = user.generateAccessToken();
-    const newRefreshToken = user.generateRefreshToken();
-
-    user.token = newRefreshToken;
-    await user.save({ validateBeforeSave: false });
-
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-    };
-
-    return res
-      .status(200)
-      .cookie("refreshToken", newRefreshToken, cookieOptions)
-      .json(
-        new ApiResponse(200, { accessToken }, "Access token refreshed successfully")
-      );
-  } catch (error) {
-    throw new ApiError(401, "Invalid or expired refresh token, please login again");
-  }
 });
 
 // ─── Change Password ──────────────────────────────────────────────────────────
@@ -324,7 +276,6 @@ export {
   registerDoctor,
   loginUser,
   logoutUser,
-  refreshAccessToken,
   changePassword,
   getCurrentUser,
 };

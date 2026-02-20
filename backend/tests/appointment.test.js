@@ -75,12 +75,12 @@ describe("Appointment API Tests", () => {
     const patientLogin = await request(app)
       .post("/api/v1/users/login")
       .send({ email: patientData.email, password: patientData.password });
-    patientToken = patientLogin.body.data.accessToken;
+    patientToken = patientLogin.headers['set-cookie'];
 
     const doctorLogin = await request(app)
       .post("/api/v1/users/login")
       .send({ email: doctorData.email, password: doctorData.password });
-    doctorToken = doctorLogin.body.data.accessToken;
+    doctorToken = doctorLogin.headers['set-cookie'];
   });
 
   afterAll(async () => {
@@ -99,7 +99,7 @@ describe("Appointment API Tests", () => {
     it("should create an offline appointment successfully", async () => {
       const res = await request(app)
         .post("/api/v1/appointments")
-        .set("Authorization", `Bearer ${patientToken}`)
+        .set("Cookie", patientToken)
         .send({
           doctorId,
           patientPhoneNumber: "+1-555-0101",
@@ -118,7 +118,7 @@ describe("Appointment API Tests", () => {
     it("should create an online appointment successfully", async () => {
       const res = await request(app)
         .post("/api/v1/appointments")
-        .set("Authorization", `Bearer ${patientToken}`)
+        .set("Cookie", patientToken)
         .send({
           doctorId,
           patientPhoneNumber: "+1-555-0102",
@@ -135,7 +135,7 @@ describe("Appointment API Tests", () => {
     it("should return 400 when mode is missing", async () => {
       const res = await request(app)
         .post("/api/v1/appointments")
-        .set("Authorization", `Bearer ${patientToken}`)
+        .set("Cookie", patientToken)
         .send({
           doctorId,
           patientPhoneNumber: "+1-555-0103",
@@ -151,7 +151,7 @@ describe("Appointment API Tests", () => {
     it("should return 400 for an invalid mode value", async () => {
       const res = await request(app)
         .post("/api/v1/appointments")
-        .set("Authorization", `Bearer ${patientToken}`)
+        .set("Cookie", patientToken)
         .send({
           doctorId,
           patientPhoneNumber: "+1-555-0104",
@@ -168,7 +168,7 @@ describe("Appointment API Tests", () => {
     it("should return 400 when doctorId is missing", async () => {
       const res = await request(app)
         .post("/api/v1/appointments")
-        .set("Authorization", `Bearer ${patientToken}`)
+        .set("Cookie", patientToken)
         .send({
           patientPhoneNumber: "+1-555-0105",
           appointmentDate: futureDate,
@@ -183,7 +183,7 @@ describe("Appointment API Tests", () => {
     it("should return 400 when appointmentDate is missing", async () => {
       const res = await request(app)
         .post("/api/v1/appointments")
-        .set("Authorization", `Bearer ${patientToken}`)
+        .set("Cookie", patientToken)
         .send({
           doctorId,
           patientPhoneNumber: "+1-555-0106",
@@ -198,7 +198,7 @@ describe("Appointment API Tests", () => {
     it("should return 400 when appointmentTime is missing", async () => {
       const res = await request(app)
         .post("/api/v1/appointments")
-        .set("Authorization", `Bearer ${patientToken}`)
+        .set("Cookie", patientToken)
         .send({
           doctorId,
           patientPhoneNumber: "+1-555-0107",
@@ -213,7 +213,7 @@ describe("Appointment API Tests", () => {
     it("should return 400 when patientPhoneNumber is missing", async () => {
       const res = await request(app)
         .post("/api/v1/appointments")
-        .set("Authorization", `Bearer ${patientToken}`)
+        .set("Cookie", patientToken)
         .send({
           doctorId,
           appointmentDate: futureDate,
@@ -228,7 +228,7 @@ describe("Appointment API Tests", () => {
     it("should return 403 when a doctor tries to book", async () => {
       const res = await request(app)
         .post("/api/v1/appointments")
-        .set("Authorization", `Bearer ${doctorToken}`)
+        .set("Cookie", doctorToken)
         .send({
           doctorId,
           patientPhoneNumber: "+1-555-0108",
@@ -264,7 +264,7 @@ describe("Appointment API Tests", () => {
     beforeAll(async () => {
       await request(app)
         .post("/api/v1/appointments")
-        .set("Authorization", `Bearer ${patientToken}`)
+        .set("Cookie", patientToken)
         .send({
           doctorId,
           patientPhoneNumber: "+1-555-0200",
@@ -281,7 +281,7 @@ describe("Appointment API Tests", () => {
     it("should return 409 when same slot is already pending/approved", async () => {
       const res = await request(app)
         .post("/api/v1/appointments")
-        .set("Authorization", `Bearer ${patientToken}`)
+        .set("Cookie", patientToken)
         .send({
           doctorId,
           patientPhoneNumber: "+1-555-0201",
@@ -300,7 +300,7 @@ describe("Appointment API Tests", () => {
     beforeAll(async () => {
       await request(app)
         .post("/api/v1/appointments")
-        .set("Authorization", `Bearer ${patientToken}`)
+        .set("Cookie", patientToken)
         .send({
           doctorId,
           patientPhoneNumber: "+1-555-0300",
@@ -314,7 +314,7 @@ describe("Appointment API Tests", () => {
     it("should return patient's appointments", async () => {
       const res = await request(app)
         .get("/api/v1/appointments/my")
-        .set("Authorization", `Bearer ${patientToken}`);
+        .set("Cookie", patientToken);
 
       expect(res.statusCode).toBe(200);
       expect(Array.isArray(res.body.data.appointments)).toBe(true);
@@ -324,7 +324,7 @@ describe("Appointment API Tests", () => {
     it("should include mode field in returned appointments", async () => {
       const res = await request(app)
         .get("/api/v1/appointments/my")
-        .set("Authorization", `Bearer ${patientToken}`);
+        .set("Cookie", patientToken);
 
       expect(res.statusCode).toBe(200);
       const appt = res.body.data.appointments[0];
@@ -334,7 +334,7 @@ describe("Appointment API Tests", () => {
     it("should return 403 when a doctor calls this endpoint", async () => {
       const res = await request(app)
         .get("/api/v1/appointments/my")
-        .set("Authorization", `Bearer ${doctorToken}`);
+        .set("Cookie", doctorToken);
 
       expect(res.statusCode).toBe(403);
     });
@@ -350,7 +350,7 @@ describe("Appointment API Tests", () => {
     it("should return doctor's appointments", async () => {
       const res = await request(app)
         .get("/api/v1/appointments/doctor")
-        .set("Authorization", `Bearer ${doctorToken}`);
+        .set("Cookie", doctorToken);
 
       expect(res.statusCode).toBe(200);
       expect(Array.isArray(res.body.data.appointments)).toBe(true);
@@ -360,7 +360,7 @@ describe("Appointment API Tests", () => {
     it("should filter appointments by status query param", async () => {
       const res = await request(app)
         .get("/api/v1/appointments/doctor?status=pending")
-        .set("Authorization", `Bearer ${doctorToken}`);
+        .set("Cookie", doctorToken);
 
       expect(res.statusCode).toBe(200);
       res.body.data.appointments.forEach((a) => {
@@ -371,7 +371,7 @@ describe("Appointment API Tests", () => {
     it("should return 400 for an invalid status filter", async () => {
       const res = await request(app)
         .get("/api/v1/appointments/doctor?status=unknown")
-        .set("Authorization", `Bearer ${doctorToken}`);
+        .set("Cookie", doctorToken);
 
       expect(res.statusCode).toBe(400);
       expect(res.body.message).toContain("Invalid status filter");
@@ -380,7 +380,7 @@ describe("Appointment API Tests", () => {
     it("should return 403 when a patient calls this endpoint", async () => {
       const res = await request(app)
         .get("/api/v1/appointments/doctor")
-        .set("Authorization", `Bearer ${patientToken}`);
+        .set("Cookie", patientToken);
 
       expect(res.statusCode).toBe(403);
     });
@@ -398,7 +398,7 @@ describe("Appointment API Tests", () => {
     beforeAll(async () => {
       const offlineRes = await request(app)
         .post("/api/v1/appointments")
-        .set("Authorization", `Bearer ${patientToken}`)
+        .set("Cookie", patientToken)
         .send({
           doctorId,
           patientPhoneNumber: "+1-555-0400",
@@ -410,7 +410,7 @@ describe("Appointment API Tests", () => {
 
       const onlineRes = await request(app)
         .post("/api/v1/appointments")
-        .set("Authorization", `Bearer ${patientToken}`)
+        .set("Cookie", patientToken)
         .send({
           doctorId,
           patientPhoneNumber: "+1-555-0401",
@@ -424,7 +424,7 @@ describe("Appointment API Tests", () => {
     it("should approve an offline appointment", async () => {
       const res = await request(app)
         .patch(`/api/v1/appointments/${offlineApptId}/status`)
-        .set("Authorization", `Bearer ${doctorToken}`)
+        .set("Cookie", doctorToken)
         .send({ status: "approved" });
 
       expect(res.statusCode).toBe(200);
@@ -434,7 +434,7 @@ describe("Appointment API Tests", () => {
     it("should approve an online appointment with meetingLink", async () => {
       const res = await request(app)
         .patch(`/api/v1/appointments/${onlineApptId}/status`)
-        .set("Authorization", `Bearer ${doctorToken}`)
+        .set("Cookie", doctorToken)
         .send({ status: "approved", meetingLink: "https://meet.google.com/xyz-abc" });
 
       expect(res.statusCode).toBe(200);
@@ -445,7 +445,7 @@ describe("Appointment API Tests", () => {
     it("should return 400 when approving online appointment without meetingLink", async () => {
       const newOnline = await request(app)
         .post("/api/v1/appointments")
-        .set("Authorization", `Bearer ${patientToken}`)
+        .set("Cookie", patientToken)
         .send({
           doctorId,
           patientPhoneNumber: "+1-555-0402",
@@ -457,7 +457,7 @@ describe("Appointment API Tests", () => {
 
       const res = await request(app)
         .patch(`/api/v1/appointments/${newId}/status`)
-        .set("Authorization", `Bearer ${doctorToken}`)
+        .set("Cookie", doctorToken)
         .send({ status: "approved" });
 
       expect(res.statusCode).toBe(400);
@@ -467,7 +467,7 @@ describe("Appointment API Tests", () => {
     it("should reject an appointment", async () => {
       const newAppt = await request(app)
         .post("/api/v1/appointments")
-        .set("Authorization", `Bearer ${patientToken}`)
+        .set("Cookie", patientToken)
         .send({
           doctorId,
           patientPhoneNumber: "+1-555-0403",
@@ -479,7 +479,7 @@ describe("Appointment API Tests", () => {
 
       const res = await request(app)
         .patch(`/api/v1/appointments/${newId}/status`)
-        .set("Authorization", `Bearer ${doctorToken}`)
+        .set("Cookie", doctorToken)
         .send({ status: "rejected" });
 
       expect(res.statusCode).toBe(200);
@@ -489,7 +489,7 @@ describe("Appointment API Tests", () => {
     it("should return 400 for an invalid status value", async () => {
       const res = await request(app)
         .patch(`/api/v1/appointments/${offlineApptId}/status`)
-        .set("Authorization", `Bearer ${doctorToken}`)
+        .set("Cookie", doctorToken)
         .send({ status: "maybe" });
 
       expect(res.statusCode).toBe(400);
@@ -499,7 +499,7 @@ describe("Appointment API Tests", () => {
     it("should return 400 when status is missing", async () => {
       const res = await request(app)
         .patch(`/api/v1/appointments/${offlineApptId}/status`)
-        .set("Authorization", `Bearer ${doctorToken}`)
+        .set("Cookie", doctorToken)
         .send({});
 
       expect(res.statusCode).toBe(400);
@@ -509,7 +509,7 @@ describe("Appointment API Tests", () => {
     it("should return 403 when a patient tries to update status", async () => {
       const res = await request(app)
         .patch(`/api/v1/appointments/${offlineApptId}/status`)
-        .set("Authorization", `Bearer ${patientToken}`)
+        .set("Cookie", patientToken)
         .send({ status: "approved" });
 
       expect(res.statusCode).toBe(403);
@@ -520,7 +520,7 @@ describe("Appointment API Tests", () => {
       const fakeId = "64a000000000000000000000";
       const res = await request(app)
         .patch(`/api/v1/appointments/${fakeId}/status`)
-        .set("Authorization", `Bearer ${doctorToken}`)
+        .set("Cookie", doctorToken)
         .send({ status: "approved" });
 
       expect(res.statusCode).toBe(404);
@@ -542,7 +542,7 @@ describe("Appointment API Tests", () => {
     beforeAll(async () => {
       const pendingRes = await request(app)
         .post("/api/v1/appointments")
-        .set("Authorization", `Bearer ${patientToken}`)
+        .set("Cookie", patientToken)
         .send({
           doctorId,
           patientPhoneNumber: "+1-555-0500",
@@ -554,7 +554,7 @@ describe("Appointment API Tests", () => {
 
       const approvedRes = await request(app)
         .post("/api/v1/appointments")
-        .set("Authorization", `Bearer ${patientToken}`)
+        .set("Cookie", patientToken)
         .send({
           doctorId,
           patientPhoneNumber: "+1-555-0501",
@@ -566,14 +566,14 @@ describe("Appointment API Tests", () => {
 
       await request(app)
         .patch(`/api/v1/appointments/${approvedApptId}/status`)
-        .set("Authorization", `Bearer ${doctorToken}`)
+        .set("Cookie", doctorToken)
         .send({ status: "approved" });
     });
 
     it("should cancel a pending appointment", async () => {
       const res = await request(app)
         .patch(`/api/v1/appointments/${pendingApptId}/cancel`)
-        .set("Authorization", `Bearer ${patientToken}`);
+        .set("Cookie", patientToken);
 
       expect(res.statusCode).toBe(200);
       expect(res.body.data.appointment.status).toBe("cancelled");
@@ -582,7 +582,7 @@ describe("Appointment API Tests", () => {
     it("should return 400 when trying to cancel an approved appointment", async () => {
       const res = await request(app)
         .patch(`/api/v1/appointments/${approvedApptId}/cancel`)
-        .set("Authorization", `Bearer ${patientToken}`);
+        .set("Cookie", patientToken);
 
       expect(res.statusCode).toBe(400);
       expect(res.body.message).toContain("Cannot cancel");
@@ -591,7 +591,7 @@ describe("Appointment API Tests", () => {
     it("should return 403 when a doctor tries to cancel", async () => {
       const newAppt = await request(app)
         .post("/api/v1/appointments")
-        .set("Authorization", `Bearer ${patientToken}`)
+        .set("Cookie", patientToken)
         .send({
           doctorId,
           patientPhoneNumber: "+1-555-0502",
@@ -603,7 +603,7 @@ describe("Appointment API Tests", () => {
 
       const res = await request(app)
         .patch(`/api/v1/appointments/${newId}/cancel`)
-        .set("Authorization", `Bearer ${doctorToken}`);
+        .set("Cookie", doctorToken);
 
       expect(res.statusCode).toBe(403);
       expect(res.body.message).toContain("Only patients");
@@ -613,7 +613,7 @@ describe("Appointment API Tests", () => {
       const fakeId = "64a000000000000000000000";
       const res = await request(app)
         .patch(`/api/v1/appointments/${fakeId}/cancel`)
-        .set("Authorization", `Bearer ${patientToken}`);
+        .set("Cookie", patientToken);
 
       expect(res.statusCode).toBe(404);
     });

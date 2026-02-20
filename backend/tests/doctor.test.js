@@ -114,7 +114,7 @@ describe("Doctor API Tests", () => {
         password: doctor1Data.password,
       });
 
-    accessToken = loginRes.body.data.accessToken;
+    accessToken = loginRes.headers['set-cookie'];
   });
 
   afterAll(async () => {
@@ -250,7 +250,7 @@ describe("Doctor API Tests", () => {
 
       const res = await request(app)
         .put("/api/v1/doctors/update")
-        .set("Authorization", `Bearer ${accessToken}`)
+        .set("Cookie", accessToken)
         .send(updateData);
 
       // Note: This will fail until auth middleware is implemented
@@ -298,7 +298,7 @@ describe("Doctor API Tests", () => {
 
       const res = await request(app)
         .put("/api/v1/doctors/timing/update")
-        .set("Authorization", `Bearer ${accessToken}`)
+        .set("Cookie", accessToken)
         .send({ clinicTiming: updatedTiming });
 
       // Will work once auth middleware is implemented
@@ -326,7 +326,7 @@ describe("Doctor API Tests", () => {
 
       const res = await request(app)
         .put("/api/v1/doctors/address/update")
-        .set("Authorization", `Bearer ${accessToken}`)
+        .set("Cookie", accessToken)
         .send({ clinicAddress: updatedAddress });
 
       expect(res.statusCode).toBeLessThan(500);
@@ -346,7 +346,7 @@ describe("Doctor API Tests", () => {
     it("should update consultation fee", async () => {
       const res = await request(app)
         .put("/api/v1/doctors/fee/update")
-        .set("Authorization", `Bearer ${accessToken}`)
+        .set("Cookie", accessToken)
         .send({ consultationFee: 750 });
 
       expect(res.statusCode).toBeLessThan(500);

@@ -178,8 +178,7 @@ describe("User API Tests", () => {
       expect(res.body.message).toBe("Logged in successfully");
       expect(res.body.data).toBeTruthy();
       expect(res.body.data.user).toBeTruthy();
-      expect(res.body.data.accessToken).toBeTruthy();
-    });
+          });
 
     it("should generate access token with correct payload", async () => {
       const res = await request(app).post(LOGIN).send({
@@ -188,7 +187,7 @@ describe("User API Tests", () => {
       });
 
       expect(res.statusCode).toBe(200);
-      expect(res.body.data.accessToken.split(".").length).toBe(3);
+      expect(res.headers['set-cookie'].some(c => c.startsWith('token='))).toBe(true);
     });
 
     it("should set refresh token in cookie", async () => {
@@ -199,7 +198,7 @@ describe("User API Tests", () => {
 
       expect(res.statusCode).toBe(200);
       expect(res.headers["set-cookie"]).toBeTruthy();
-      expect(res.headers["set-cookie"][0]).toContain("refreshToken");
+      expect(res.headers["set-cookie"][0]).toContain("token=");
     });
 
     it("should return user data without password", async () => {
@@ -281,19 +280,19 @@ describe("User API Tests", () => {
       expect(accessToken.split(".").length).toBe(3);
     });
 
-    it("should generate valid refresh token", async () => {
-      const user = await User.findOne({ email: testUser.email });
-      const refreshToken = user.generateRefreshToken();
-      expect(refreshToken).toBeTruthy();
-      expect(typeof refreshToken).toBe("string");
-      expect(refreshToken.split(".").length).toBe(3);
-    });
-
-    it("should generate different access and refresh tokens", async () => {
+    it("should include user info in access token payload", async () => {
       const user = await User.findOne({ email: testUser.email });
       const accessToken = user.generateAccessToken();
-      const refreshToken = user.generateRefreshToken();
-      expect(accessToken).not.toBe(refreshToken);
+      const parts = accessToken.split(".");
+      const payload = JSON.parse(Buffer.from(parts[1], "base64").toString());
+      expect(payload._id).toBe(user._id.toString());
+      expect(payload.email).toBe(testUser.email);
+      expect(payload.usertype).toBe("patient");
+    });
+
+    it("should not expose generateRefreshToken method", async () => {
+      const user = await User.findOne({ email: testUser.email });
+      expect(typeof user.generateRefreshToken).toBe("undefined");
     });
   });
 });

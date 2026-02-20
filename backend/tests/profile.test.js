@@ -86,7 +86,7 @@ describe("User Profile API Tests", () => {
         password: patientData.password,
       });
 
-    patientAccessToken = patientLoginRes.body.data.accessToken;
+    patientAccessToken = patientLoginRes.headers['set-cookie'];
 
     // Register doctor
     const doctorRes = await request(app)
@@ -108,7 +108,7 @@ describe("User Profile API Tests", () => {
         password: doctorData.password,
       });
 
-    doctorAccessToken = doctorLoginRes.body.data.accessToken;
+    doctorAccessToken = doctorLoginRes.headers['set-cookie'];
   });
 
   afterAll(async () => {
@@ -126,7 +126,7 @@ describe("User Profile API Tests", () => {
     it("should get patient profile with valid token", async () => {
       const res = await request(app)
         .get("/api/v1/users/profile")
-        .set("Authorization", `Bearer ${patientAccessToken}`);
+        .set("Cookie", patientAccessToken);
 
       expect(res.statusCode).toBe(200);
       expect(res.body.statusCode).toBe(200);
@@ -137,7 +137,7 @@ describe("User Profile API Tests", () => {
     it("should return patient user info correctly", async () => {
       const res = await request(app)
         .get("/api/v1/users/profile")
-        .set("Authorization", `Bearer ${patientAccessToken}`);
+        .set("Cookie", patientAccessToken);
 
       expect(res.statusCode).toBe(200);
 
@@ -151,7 +151,7 @@ describe("User Profile API Tests", () => {
     it("should not return password in patient profile", async () => {
       const res = await request(app)
         .get("/api/v1/users/profile")
-        .set("Authorization", `Bearer ${patientAccessToken}`);
+        .set("Cookie", patientAccessToken);
 
       expect(res.statusCode).toBe(200);
       expect(res.body.data.user.password).toBeUndefined();
@@ -161,7 +161,7 @@ describe("User Profile API Tests", () => {
     it("should not include doctor profile for patient", async () => {
       const res = await request(app)
         .get("/api/v1/users/profile")
-        .set("Authorization", `Bearer ${patientAccessToken}`);
+        .set("Cookie", patientAccessToken);
 
       expect(res.statusCode).toBe(200);
       expect(res.body.data.doctor).toBeUndefined();
@@ -170,7 +170,7 @@ describe("User Profile API Tests", () => {
     it("should return patient profile with dob, bloodGroup, gender", async () => {
       const res = await request(app)
         .get("/api/v1/users/profile")
-        .set("Authorization", `Bearer ${patientAccessToken}`);
+        .set("Cookie", patientAccessToken);
 
       expect(res.statusCode).toBe(200);
       const patient = res.body.data.patient;
@@ -190,7 +190,7 @@ describe("User Profile API Tests", () => {
     it("should reject request with invalid token", async () => {
       const res = await request(app)
         .get("/api/v1/users/profile")
-        .set("Authorization", "Bearer invalid_token_12345");
+        .set("Cookie", ["token=invalid_token_12345"]);
 
       expect(res.statusCode).toBeGreaterThanOrEqual(400);
     });
@@ -201,7 +201,7 @@ describe("User Profile API Tests", () => {
     it("should get doctor profile with user and doctor info", async () => {
       const res = await request(app)
         .get("/api/v1/users/profile")
-        .set("Authorization", `Bearer ${doctorAccessToken}`);
+        .set("Cookie", doctorAccessToken);
 
       expect(res.statusCode).toBe(200);
       expect(res.body.statusCode).toBe(200);
@@ -212,7 +212,7 @@ describe("User Profile API Tests", () => {
     it("should return doctor user info correctly", async () => {
       const res = await request(app)
         .get("/api/v1/users/profile")
-        .set("Authorization", `Bearer ${doctorAccessToken}`);
+        .set("Cookie", doctorAccessToken);
 
       expect(res.statusCode).toBe(200);
 
@@ -226,7 +226,7 @@ describe("User Profile API Tests", () => {
     it("should return doctor profile info", async () => {
       const res = await request(app)
         .get("/api/v1/users/profile")
-        .set("Authorization", `Bearer ${doctorAccessToken}`);
+        .set("Cookie", doctorAccessToken);
 
       expect(res.statusCode).toBe(200);
 
@@ -241,7 +241,7 @@ describe("User Profile API Tests", () => {
     it("should include clinic address in doctor profile", async () => {
       const res = await request(app)
         .get("/api/v1/users/profile")
-        .set("Authorization", `Bearer ${doctorAccessToken}`);
+        .set("Cookie", doctorAccessToken);
 
       expect(res.statusCode).toBe(200);
 
@@ -254,7 +254,7 @@ describe("User Profile API Tests", () => {
     it("should include clinic timing in doctor profile", async () => {
       const res = await request(app)
         .get("/api/v1/users/profile")
-        .set("Authorization", `Bearer ${doctorAccessToken}`);
+        .set("Cookie", doctorAccessToken);
 
       expect(res.statusCode).toBe(200);
 
@@ -269,7 +269,7 @@ describe("User Profile API Tests", () => {
     it("should include qualifications in doctor profile", async () => {
       const res = await request(app)
         .get("/api/v1/users/profile")
-        .set("Authorization", `Bearer ${doctorAccessToken}`);
+        .set("Cookie", doctorAccessToken);
 
       expect(res.statusCode).toBe(200);
 
@@ -283,7 +283,7 @@ describe("User Profile API Tests", () => {
     it("should include bio in doctor profile", async () => {
       const res = await request(app)
         .get("/api/v1/users/profile")
-        .set("Authorization", `Bearer ${doctorAccessToken}`);
+        .set("Cookie", doctorAccessToken);
 
       expect(res.statusCode).toBe(200);
 
@@ -294,7 +294,7 @@ describe("User Profile API Tests", () => {
     it("should not return password in doctor profile", async () => {
       const res = await request(app)
         .get("/api/v1/users/profile")
-        .set("Authorization", `Bearer ${doctorAccessToken}`);
+        .set("Cookie", doctorAccessToken);
 
       expect(res.statusCode).toBe(200);
       expect(res.body.data.user.password).toBeUndefined();
@@ -307,7 +307,7 @@ describe("User Profile API Tests", () => {
     it("should include createdAt and updatedAt in patient profile", async () => {
       const res = await request(app)
         .get("/api/v1/users/profile")
-        .set("Authorization", `Bearer ${patientAccessToken}`);
+        .set("Cookie", patientAccessToken);
 
       expect(res.statusCode).toBe(200);
 
@@ -319,7 +319,7 @@ describe("User Profile API Tests", () => {
     it("should include createdAt and updatedAt in doctor profile", async () => {
       const res = await request(app)
         .get("/api/v1/users/profile")
-        .set("Authorization", `Bearer ${doctorAccessToken}`);
+        .set("Cookie", doctorAccessToken);
 
       expect(res.statusCode).toBe(200);
 

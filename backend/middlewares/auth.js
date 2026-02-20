@@ -4,10 +4,7 @@ import { ApiError } from "../utils/ApiError.js";
 
 const auth = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
-    const token = authHeader && authHeader.startsWith("Bearer ")
-      ? authHeader.split(" ")[1]
-      : null;
+    const token = req.cookies?.token;
 
     if (!token) {
       throw new ApiError(401, "Access token is required");

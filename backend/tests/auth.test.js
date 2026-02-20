@@ -304,7 +304,7 @@ describe("Authentication & Doctor Registration Tests", () => {
 
       expect(res.statusCode).toBe(200);
       expect(res.body.data.user.usertype).toBe("patient");
-      expect(res.body.data.accessToken).toBeTruthy();
+      expect(res.headers['set-cookie'].some(c => c.startsWith('token='))).toBe(true);
     });
 
     it("should login doctor successfully", async () => {
@@ -317,7 +317,7 @@ describe("Authentication & Doctor Registration Tests", () => {
 
       expect(res.statusCode).toBe(200);
       expect(res.body.data.user.usertype).toBe("doctor");
-      expect(res.body.data.accessToken).toBeTruthy();
+      expect(res.headers['set-cookie'].some(c => c.startsWith('token='))).toBe(true);
     });
 
     it("should not expose password in login response", async () => {

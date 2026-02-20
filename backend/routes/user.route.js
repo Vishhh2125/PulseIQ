@@ -4,7 +4,6 @@ import {
   registerDoctor,
   loginUser,
   logoutUser,
-  refreshAccessToken,
   changePassword,
   getCurrentUser,
 } from "../controllers/user.controller.js";
@@ -16,7 +15,6 @@ const router = Router();
 router.post("/auth/register/patient", registerPatient);
 router.post("/auth/register/doctor", registerDoctor);
 router.post("/login", loginUser);
-router.post("/refresh-token", refreshAccessToken);
 
 // Protected routes
 router.post("/logout", auth, logoutUser);
