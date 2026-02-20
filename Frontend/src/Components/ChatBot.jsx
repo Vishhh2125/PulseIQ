@@ -38,7 +38,8 @@ export default function ChatBot() {
   useEffect(() => {
     if (!userId) {
       console.warn("❌ userId not found in auth state");
-      console.log("Full user object:", user);
+      console.warn("Full user object:", JSON.stringify(user, null, 2));
+      console.warn("Available keys:", user ? Object.keys(user) : 'user is null');
       setError("User not authenticated. Please log in first.");
     } else {
       console.log("✅ userId found:", userId);

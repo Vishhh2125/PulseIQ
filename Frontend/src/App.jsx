@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
+import { useEffect } from 'react';
 import './App.css';
 import HomePage from './Components/HomePage.jsx';
 import AuthPage from './Components/Register.jsx';
@@ -10,6 +11,7 @@ import FitnessDashboard from './Components/FitnessDashboard.jsx';
 import ChatBot from './Components/ChatBot.jsx';
 import UserReportUpload from './Components/UserReportUpload.jsx';
 import Assessment from './Components/Assessment.jsx';
+import { getCurrentUser } from './store/authSlice.js';
 
 // Generic auth guard (any logged-in user)
 function ProtectedRoute({ children }) {
@@ -58,6 +60,17 @@ function DoctorRoute({ children }) {
 }
 
 function App() {
+  const dispatch = useDispatch();
+
+  // Initialize auth on app load - restore user data if token exists
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      // Attempt to restore user data from backend
+      dispatch(getCurrentUser());
+    }
+  }, [dispatch]);
+
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
