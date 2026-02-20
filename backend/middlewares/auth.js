@@ -4,7 +4,16 @@ import { ApiError } from "../utils/ApiError.js";
 
 const auth = async (req, res, next) => {
   try {
-    const token = req.cookies?.token;
+    let token;
+
+    // Prefer Authorization: Bearer <token> header (used by frontend)
+    const authHeader = req.headers.authorization || req.headers.Authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      token = authHeader.split(" ")[1];
+    } else if (req.cookies?.token) {
+      // Fallback to cookie-based token if present
+      token = req.cookies.token;
+    }
 
     if (!token) {
       throw new ApiError(401, "Access token is required");
