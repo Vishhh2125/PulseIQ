@@ -10,6 +10,9 @@ export default function AuthPage() {
   const [userType, setUserType] = useState('user'); // 'user' or 'doctor'
   const [showPassword, setShowPassword] = useState(false);
   const [dateOfBirth, setDateOfBirth] = useState(null);
+  const [doctorClinicTiming, setDoctorClinicTiming] = useState([
+    { day: 'monday', startTime: '09:00', endTime: '17:00' },
+  ]);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -44,9 +47,13 @@ export default function AuthPage() {
     }
   }, [searchParams]);
 
-  // If user is already authenticated, redirect to main page
+  // If user is already authenticated, redirect based on role
   useEffect(() => {
-    if (user) {
+    if (!user || !user.usertype) return;
+
+    if (user.usertype === 'doctor') {
+      navigate('/doctor/appointments', { replace: true });
+    } else {
       navigate('/main', { replace: true });
     }
   }, [user, navigate]);
@@ -110,9 +117,13 @@ export default function AuthPage() {
 
         const result = await dispatch(login(payload));
         if (login.fulfilled.match(result)) {
-          // Login successful, redirect to main page
-          navigate('/main', { replace: true });
-        }
+          const loggedInUser = result.payload?.user;
+          if (loggedInUser?.usertype === 'doctor') {
+            navigate('/doctor/appointments', { replace: true });
+          } else {
+            navigate('/main', { replace: true });
+          }
+        } 
       } 
       // Validation for registration
       else {
@@ -150,21 +161,34 @@ export default function AuthPage() {
             gender: data.gender,
             dob: dateOfBirth,
           };
-
+          console.log('Registering user with payload:', payload);
           const result = await dispatch(registerUser(payload));
           if (registerUser.fulfilled.match(result)) {
-            // Registration successful, redirect to main page
-            navigate('/main', { replace: true });
-          }
+            const registeredUser = result.payload?.user;
+            if (registeredUser?.usertype === 'doctor') {
+              navigate('/doctor/appointments', { replace: true });
+            } else {
+              navigate('/main', { replace: true });
+            }
+          } 
         } else {
           // Doctor registration
-          if (!data.name || !data.email || !data.password || !data.address || !data.specialty || !data.clinicTiming) {
+          if (
+            !data.username ||
+            !data.email ||
+            !data.password ||
+            !data.specialization ||
+            !data.licenseNumber ||
+            !data.clinicAddress ||
+            !data.consultationFee ||
+            doctorClinicTiming.length === 0
+          ) {
             dispatch(setError('Please fill in all required fields'));
             return;
           }
 
-          if (!validateName(data.name)) {
-            dispatch(setError('Name must be at least 2 characters long'));
+          if (!validateName(data.username)) {
+            dispatch(setError('Username must be at least 2 characters long'));
             return;
           }
 
@@ -178,20 +202,52 @@ export default function AuthPage() {
             return;
           }
 
+          const clinicTimingIsValid = doctorClinicTiming.every((slot) =>
+            Boolean(slot?.day?.trim()) &&
+            Boolean(slot?.startTime?.trim()) &&
+            Boolean(slot?.endTime?.trim())
+          );
+          if (!clinicTimingIsValid) {
+            dispatch(setError('Please fill all clinic timing rows (day/start/end)'));
+            return;
+          }
+
           const payload = {
-            name: data.name.trim(),
+            username: data.username.trim(),
             email: data.email.trim(),
             password: data.password,
-            address: data.address.trim(),
-            specialty: data.specialty.trim(),
-            clinicTiming: data.clinicTiming.trim(),
+            specialization: data.specialization.trim(),
+            licenseNumber: data.licenseNumber.trim(),
+            experience: Number(data.experience || 0),
+            // Backend expects an embedded object for clinicAddress.
+            // For hackathon: store the full address in `street`.
+            clinicAddress: { street: data.clinicAddress.trim() },
+            clinicTiming: doctorClinicTiming.map((slot) => ({
+              day: slot.day,
+              startTime: slot.startTime,
+              endTime: slot.endTime,
+            })),
+            consultationFee: Number(data.consultationFee || 0),
+            // Backend expects array of embedded objects: { degree, institution, year }
+            qualifications: (data.qualifications || '')
+              .split(',')
+              .map((q) => q.trim())
+              .filter(Boolean)
+              .map((degree) => ({ degree })),
+            bio: (data.bio || '').trim(),
           };
+
+          console.log('Registering doctor with payload:', payload);
 
           const result = await dispatch(registerDoctor(payload));
           if (registerDoctor.fulfilled.match(result)) {
-            // Registration successful, redirect to main page
-            navigate('/main', { replace: true });
-          }
+            const registeredDoctor = result.payload?.user;
+            if (registeredDoctor?.usertype === 'doctor') {
+              navigate('/doctor/appointments', { replace: true });
+            } else {
+              navigate('/main', { replace: true });
+            }
+          } 
         }
       }
     } catch (error) {
@@ -266,7 +322,7 @@ export default function AuthPage() {
             </div>
           )}
 
-          {!isLogin && (
+          {!isLogin && userType === 'user' && (
             <div className="mb-4">
               <label className="block mb-1 font-medium">
                 Name <span className="text-red-500">*</span>
@@ -280,10 +336,32 @@ export default function AuthPage() {
                 className={`w-full p-2 border rounded focus:outline-none focus:ring-2 ${
                   errors.name ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-200'
                 }`}
-                placeholder={userType === 'user' ? "Enter your full name" : "Enter doctor's full name"}
+                placeholder="Enter your full name"
               />
               {errors.name && (
                 <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
+              )}
+            </div>
+          )}
+
+          {!isLogin && userType === 'doctor' && (
+            <div className="mb-4">
+              <label className="block mb-1 font-medium">
+                Username <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                {...registerField('username', {
+                  required: 'Username is required',
+                  minLength: { value: 2, message: 'Username must be at least 2 characters' },
+                })}
+                className={`w-full p-2 border rounded focus:outline-none focus:ring-2 ${
+                  errors.username ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-200'
+                }`}
+                placeholder="e.g., dr_smith"
+              />
+              {errors.username && (
+                <p className="text-red-500 text-sm mt-1">{errors.username.message}</p>
               )}
             </div>
           )}
@@ -404,61 +482,204 @@ export default function AuthPage() {
             <>
               <div className="mb-4">
                 <label className="block mb-1 font-medium">
-                  Address <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  {...registerField('address', { required: 'Address is required' })}
-                  className={`w-full p-2 border rounded focus:outline-none focus:ring-2 ${
-                    errors.address ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-200'
-                  }`}
-                  rows="3"
-                  placeholder="Enter clinic address"
-                />
-                {errors.address && (
-                  <p className="text-red-500 text-sm mt-1">{errors.address.message}</p>
-                )}
-              </div>
-              <div className="mb-4">
-                <label className="block mb-1 font-medium">
-                  Specialty <span className="text-red-500">*</span>
+                  Specialization <span className="text-red-500">*</span>
                 </label>
                 <select
-                  {...registerField('specialty', { required: 'Specialty is required' })}
+                  {...registerField('specialization', { required: 'Specialization is required' })}
                   className={`w-full p-2 border rounded focus:outline-none focus:ring-2 ${
-                    errors.specialty ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-200'
+                    errors.specialization ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-200'
                   }`}
                 >
-                  <option value="">Select Specialty</option>
+                  <option value="">Select Specialization</option>
                   {[
                     'Cardiology', 'Dermatology', 'Neurology', 'Orthopedics', 
                     'Pediatrics', 'Psychiatry', 'Oncology', 'Gynecology',
                     'Urology', 'Ophthalmology', 'ENT', 'General Medicine',
                     'Emergency Medicine', 'Radiology', 'Pathology', 'Anesthesiology'
-                  ].map((specialty) => (
-                    <option key={specialty} value={specialty}>
-                      {specialty}
+                  ].map((specialization) => (
+                    <option key={specialization} value={specialization}>
+                      {specialization}
                     </option>
                   ))}
                 </select>
-                {errors.specialty && (
-                  <p className="text-red-500 text-sm mt-1">{errors.specialty.message}</p>
+                {errors.specialization && (
+                  <p className="text-red-500 text-sm mt-1">{errors.specialization.message}</p>
                 )}
               </div>
+
+              <div className="mb-4">
+                <label className="block mb-1 font-medium">
+                  License Number <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  {...registerField('licenseNumber', { required: 'License number is required' })}
+                  className={`w-full p-2 border rounded focus:outline-none focus:ring-2 ${
+                    errors.licenseNumber ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-200'
+                  }`}
+                  placeholder="e.g., LIC-2025-001"
+                />
+                {errors.licenseNumber && (
+                  <p className="text-red-500 text-sm mt-1">{errors.licenseNumber.message}</p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div>
+                  <label className="block mb-1 font-medium">
+                    Experience (years)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    {...registerField('experience')}
+                    className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200"
+                    placeholder="e.g., 10"
+                  />
+                </div>
+                <div>
+                  <label className="block mb-1 font-medium">
+                    Consultation Fee <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    {...registerField('consultationFee', { required: 'Consultation fee is required' })}
+                    className={`w-full p-2 border rounded focus:outline-none focus:ring-2 ${
+                      errors.consultationFee ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-200'
+                    }`}
+                    placeholder="e.g., 500"
+                  />
+                  {errors.consultationFee && (
+                    <p className="text-red-500 text-sm mt-1">{errors.consultationFee.message}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="block mb-1 font-medium">
+                  Clinic Address <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  {...registerField('clinicAddress', {
+                    required: 'Clinic address is required',
+                    setValueAs: (v) => (typeof v === 'string' ? v.trim() : v),
+                    validate: (v) =>
+                      (typeof v === 'string' && v.trim().length > 0) || 'Clinic address is required',
+                  })}
+                  className={`w-full p-2 border rounded focus:outline-none focus:ring-2 ${
+                    errors.clinicAddress ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-200'
+                  }`}
+                  rows="3"
+                  placeholder="e.g., 123 Main St, Mumbai, Maharashtra"
+                />
+                {errors.clinicAddress && (
+                  <p className="text-red-500 text-sm mt-1">{errors.clinicAddress.message}</p>
+                )}
+              </div>
+
               <div className="mb-4">
                 <label className="block mb-1 font-medium">
                   Clinic Timing <span className="text-red-500">*</span>
                 </label>
+                <div className="space-y-2">
+                  {doctorClinicTiming.map((slot, idx) => (
+                    <div key={`${slot.day}-${idx}`} className="grid grid-cols-3 gap-2">
+                      <select
+                        value={slot.day}
+                        onChange={(e) => {
+                          const next = [...doctorClinicTiming];
+                          next[idx] = { ...next[idx], day: e.target.value };
+                          setDoctorClinicTiming(next);
+                        }}
+                        className="p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200"
+                      >
+                        {[
+                          { value: 'monday', label: 'Monday' },
+                          { value: 'tuesday', label: 'Tuesday' },
+                          { value: 'wednesday', label: 'Wednesday' },
+                          { value: 'thursday', label: 'Thursday' },
+                          { value: 'friday', label: 'Friday' },
+                          { value: 'saturday', label: 'Saturday' },
+                          { value: 'sunday', label: 'Sunday' },
+                        ].map((d) => (
+                          <option key={d.value} value={d.value}>
+                            {d.label}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        type="time"
+                        value={slot.startTime}
+                        onChange={(e) => {
+                          const next = [...doctorClinicTiming];
+                          next[idx] = { ...next[idx], startTime: e.target.value };
+                          setDoctorClinicTiming(next);
+                        }}
+                        className="p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200"
+                      />
+                      <input
+                        type="time"
+                        value={slot.endTime}
+                        onChange={(e) => {
+                          const next = [...doctorClinicTiming];
+                          next[idx] = { ...next[idx], endTime: e.target.value };
+                          setDoctorClinicTiming(next);
+                        }}
+                        className="p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200"
+                      />
+                    </div>
+                  ))}
+
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setDoctorClinicTiming((prev) => [
+                          ...prev,
+                          { day: 'monday', startTime: '09:00', endTime: '17:00' },
+                        ])
+                      }
+                      className="text-sm px-3 py-1 rounded border border-gray-300 hover:bg-gray-50"
+                    >
+                      Add timing
+                    </button>
+                    {doctorClinicTiming.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => setDoctorClinicTiming((prev) => prev.slice(0, -1))}
+                        className="text-sm px-3 py-1 rounded border border-gray-300 hover:bg-gray-50"
+                      >
+                        Remove last
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="block mb-1 font-medium">
+                  Qualifications
+                </label>
                 <input
                   type="text"
-                  {...registerField('clinicTiming', { required: 'Clinic timing is required' })}
-                  className={`w-full p-2 border rounded focus:outline-none focus:ring-2 ${
-                    errors.clinicTiming ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-200'
-                  }`}
-                  placeholder="e.g., Mon-Fri 9:00 AM - 5:00 PM"
+                  {...registerField('qualifications')}
+                  className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  placeholder="e.g., MBBS, MD - Cardiology"
                 />
-                {errors.clinicTiming && (
-                  <p className="text-red-500 text-sm mt-1">{errors.clinicTiming.message}</p>
-                )}
+                <p className="text-xs text-gray-500 mt-1">Comma-separated (e.g., MBBS, MD - Cardiology)</p>
+              </div>
+
+              <div className="mb-4">
+                <label className="block mb-1 font-medium">
+                  Bio
+                </label>
+                <textarea
+                  {...registerField('bio')}
+                  className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  rows="3"
+                  placeholder="Short bio for patients (optional)"
+                />
               </div>
             </>
           )}

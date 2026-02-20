@@ -55,7 +55,7 @@ export const authAPI = {
         password: doctorData.password,
         specialization: doctorData.specialty || doctorData.specialization,
         licenseNumber: doctorData.licenseNumber || `LIC-${Date.now()}`,
-        clinicAddress: doctorData.address,
+        clinicAddress: doctorData.clinicAddress || doctorData.address,
         clinicTiming: doctorData.clinicTiming,
         experience: doctorData.experience || 0,
         consultationFee: doctorData.consultationFee || 0,

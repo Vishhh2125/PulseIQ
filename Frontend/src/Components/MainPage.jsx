@@ -1,241 +1,411 @@
-import React, { useEffect } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import { getCurrentUser, logout } from "../store/authSlice.js";
+import {
+  Stethoscope,
+  Baby,
+  FileUp,
+  ShieldAlert,
+  CalendarCheck,
+  Brain,
+  BarChart2,
+  ClipboardList,
+  HeartHandshake,
+  Info,
+  ArrowRight,
+  Sparkles,
+  Bell,
+  ChevronRight,
+  ClipboardListIcon
+} from "lucide-react";
+import { motion } from "framer-motion";
 
-const MainHome = () => {
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const { user } = useSelector((state) => state.auth);
+// ─── Data ─────────────────────────────────────────────────────────────────────
 
-  // Fetch current user data on mount
-  useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      if (!user || !user.username) {
-        dispatch(getCurrentUser());
-      }
-    }
-  }, [dispatch]);
+const ACTION_CARDS = [
+  {
+    id: "symptoms",
+    icon: Stethoscope,
+    label: "Analyze Symptoms",
+    desc: "Describe what you're feeling and get an instant AI-powered health assessment.",
+    iconBg: "bg-blue-100",
+    iconColor: "text-blue-600",
+    border: "border-blue-100",
+    tag: "Most used",
+    tagColor: "bg-blue-50 text-blue-600",
+  },
+  {
+    id: "pregnancy",
+    icon: Baby,
+    label: "Pregnancy Health Monitor",
+    desc: "Track your pregnancy milestones and receive personalized guidance at every stage.",
+    iconBg: "bg-rose-100",
+    iconColor: "text-rose-500",
+    border: "border-rose-100",
+    tag: null,
+    tagColor: "",
+  },
+  {
+    id: "upload",
+    icon: FileUp,
+    label: "Upload Medical Report",
+    desc: "Upload lab results or scans and get a plain-language AI summary in seconds.",
+    iconBg: "bg-violet-100",
+    iconColor: "text-violet-600",
+    border: "border-violet-100",
+    tag: null,
+    tagColor: "",
+  },
+  {
+    id: "risk",
+    icon: ShieldAlert,
+    label: "View Health Risk Summary",
+    desc: "See your current risk profile across cardiovascular, metabolic, and other categories.",
+    iconBg: "bg-amber-100",
+    iconColor: "text-amber-600",
+    border: "border-amber-100",
+    tag: null,
+    tagColor: "",
+  },
+  {
+    id: "appointment",
+    icon: CalendarCheck,
+    label: "Book Doctor Appointment",
+    desc: "Connect with a verified specialist matched to your health profile and availability.",
+    iconBg: "bg-emerald-100",
+    iconColor: "text-emerald-600",
+    border: "border-emerald-100",
+    tag: null,
+    tagColor: "",
+  },
+  {
+    id: "medication",
+    icon: ClipboardListIcon,
+    label: "Medication Adherence Tracker",
+    desc: "Tracks medication usage patterns to monitor and improve treatment consistency.",
+    iconBg: "bg-yellow-100",
+    iconColor: "text-yellow-600",
+    border: "border-yellow-100",
+    tag: null,
+    tagColor: "",
+  },
+];
 
-  // Get user's name (backend returns username field)
-  const userName = user?.username || 'User';
+const AI_CAPABILITIES = [
+  {
+    icon: Brain,
+    title: "AI Symptom Analysis",
+    desc: "Clinical-grade AI evaluates your symptoms against thousands of patterns to surface probable conditions early.",
+    iconBg: "bg-blue-50",
+    iconColor: "text-blue-600",
+  },
+  {
+    icon: BarChart2,
+    title: "Predictive Risk Assessment",
+    desc: "Continuous scoring across cardiovascular, metabolic, and chronic risk domains — updated as your data changes.",
+    iconBg: "bg-cyan-50",
+    iconColor: "text-cyan-600",
+  },
+  {
+    icon: ClipboardList,
+    title: "Smart Care Plans",
+    desc: "Adaptive, AI-generated care roadmaps with lifestyle guidance, monitoring schedules, and health goals.",
+    iconBg: "bg-emerald-50",
+    iconColor: "text-emerald-600",
+  },
+  {
+    icon: HeartHandshake,
+    title: "Mental Health Support",
+    desc: "Mood tracking, stress detection, and curated mental wellness resources — always private, always available.",
+    iconBg: "bg-rose-50",
+    iconColor: "text-rose-500",
+  },
+];
 
-  const handleLogout = async () => {
-    await dispatch(logout());
-    navigate('/auth?mode=login', { replace: true });
-  };
-  const styles = {
-    container: {
-      display: "flex",
-      height: "100vh",
-      fontFamily: "Segoe UI, sans-serif",
-      background: "#f5f7fb",
-    },
-    sidebar: {
-      width: "250px",
-      background: "#fff",
-      padding: "20px",
-      borderRight: "1px solid #eee",
-    },
-    logo: {
-      fontSize: "20px",
-      fontWeight: "bold",
-      marginBottom: "30px",
-    },
-    section: {
-      fontSize: "12px",
-      color: "gray",
-      margin: "20px 0 10px",
-    },
-    link: {
-      display: "block",
-      padding: "10px",
-      borderRadius: "8px",
-      cursor: "pointer",
-      color: "#333",
-      marginBottom: "5px",
-    },
-    activeLink: {
-      background: "#3b82f6",
-      color: "white",
-    },
-    main: {
-      flex: 1,
-      padding: "60px",
-      textAlign: "center",
-    },
-    title: {
-      fontSize: "48px",
-      fontWeight: "bold",
-    },
-    highlight: {
-      color: "#2563eb",
-    },
-    subtitle: {
-      marginTop: "20px",
-      color: "#555",
-      maxWidth: "600px",
-      marginLeft: "auto",
-      marginRight: "auto",
-      lineHeight: "1.6",
-    },
-    buttonContainer: {
-      marginTop: "30px",
-    },
-    primaryBtn: {
-      padding: "12px 24px",
-      margin: "10px",
-      borderRadius: "8px",
-      border: "none",
-      background: "#2563eb",
-      color: "#fff",
-      fontSize: "16px",
-      cursor: "pointer",
-    },
-    secondaryBtn: {
-      padding: "12px 24px",
-      margin: "10px",
-      borderRadius: "8px",
-      border: "2px solid #2563eb",
-      background: "transparent",
-      color: "#2563eb",
-      fontSize: "16px",
-      cursor: "pointer",
-    },
-    stats: {
-      display: "flex",
-      justifyContent: "center",
-      gap: "60px",
-      marginTop: "80px",
-      flexWrap: "wrap",
-    },
-    statBox: {
-      textAlign: "center",
-    },
-    statNumber: {
-      fontSize: "28px",
-      fontWeight: "bold",
-    },
-    statLabel: {
-      color: "gray",
-    },
-  };
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
-  const SidebarLink = ({ children, active }) => (
-    <div style={{ ...styles.link, ...(active ? styles.activeLink : {}) }}>
-      {children}
-    </div>
-  );
-
+function ActionCard({ card, onNavigate }) {
+  const Icon = card.icon;
   return (
-    <div style={styles.container}>
-      {/* Sidebar */}
-      <aside style={styles.sidebar}>
-        <div style={styles.logo}>HealthCare</div>
-        {user && (
-          <div style={{ 
-            padding: "10px", 
-            marginBottom: "20px", 
-            background: "#f0f4f8", 
-            borderRadius: "8px",
-            fontSize: "14px",
-            color: "#2563eb",
-            fontWeight: "600"
-          }}>
-            Welcome, {userName}!
-          </div>
-        )}
-        {user && (
-          <button
-            onClick={handleLogout}
-            style={{
-              width: "100%",
-              padding: "10px",
-              marginTop: "20px",
-              borderRadius: "8px",
-              border: "1px solid #dc2626",
-              background: "transparent",
-              color: "#dc2626",
-              fontSize: "14px",
-              cursor: "pointer",
-              fontWeight: "600"
-            }}
-          >
-            Logout
-          </button>
-        )}
+    <button
+      onClick={() => onNavigate?.(card.id)}
+      className="group relative bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-left flex flex-col gap-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-200"
+    >
+      {card.tag && (
+        <span className={`absolute top-4 right-4 text-[10px] font-bold px-2 py-0.5 rounded-full ${card.tagColor}`}>
+          {card.tag}
+        </span>
+      )}
 
-        <p style={styles.section}>MAIN</p>
-        <SidebarLink active>Home</SidebarLink>
-        <SidebarLink>Appointments</SidebarLink>
-        <SidebarLink>Medical Records</SidebarLink>
-        <SidebarLink>Profile</SidebarLink>
+      <div className={`w-11 h-11 rounded-xl ${card.iconBg} flex items-center justify-center flex-shrink-0 transition-transform duration-200 group-hover:scale-105`}>
+        <Icon size={20} className={card.iconColor} />
+      </div>
 
-        <p style={styles.section}>AI FEATURES</p>
-        <SidebarLink>Disease Detector</SidebarLink>
-        <SidebarLink>Predictive Risk Scoring</SidebarLink>
-        <SidebarLink>Smart Care Plan Generator</SidebarLink>
-        <SidebarLink>PDF Summarizer</SidebarLink>
+      <div className="flex-1">
+        <p className="text-slate-800 font-semibold text-sm mb-1">{card.label}</p>
+        <p className="text-slate-500 text-xs leading-relaxed">{card.desc}</p>
+      </div>
 
-        <p style={styles.section}>CHATBOTS</p>
-        <SidebarLink>Medical Chatbot</SidebarLink>
-        <SidebarLink>Mental Health Chatbot</SidebarLink>
-        <SidebarLink>Voice Health Assistant</SidebarLink>
-      </aside>
+      <div className="flex items-center gap-1 text-blue-500 text-xs font-semibold">
+        Get started
+        <ChevronRight size={13} className="transition-transform duration-200 group-hover:translate-x-0.5" />
+      </div>
+    </button>
+  );
+}
 
-      {/* Main Content */}
-      <main style={styles.main}>
-        {user && (
-          <div style={{
-            marginBottom: "20px",
-            fontSize: "24px",
-            color: "#2563eb",
-            fontWeight: "600"
-          }}>
-            Welcome back, {userName}! 👋
-          </div>
-        )}
-        <h1 style={styles.title}>
-          Your Health, <span style={styles.highlight}>Reimagined</span>
-        </h1>
-
-        <p style={styles.subtitle}>
-          Experience the future of healthcare with 16 AI-powered features
-          designed to support every aspect of your health journey. From symptom
-          analysis to medication management, we've got you covered.
-        </p>
-
-        <div style={styles.buttonContainer}>
-          <button style={styles.primaryBtn}>Start AI Chat</button>
-          <button style={styles.secondaryBtn}>Book Appointment</button>
-        </div>
-
-        {/* Stats */}
-        <div style={styles.stats}>
-          <div style={styles.statBox}>
-            <div style={styles.statNumber}>50K+</div>
-            <div style={styles.statLabel}>Patients Helped</div>
-          </div>
-
-          <div style={styles.statBox}>
-            <div style={styles.statNumber}>1,200+</div>
-            <div style={styles.statLabel}>Medical Professionals</div>
-          </div>
-
-          <div style={styles.statBox}>
-            <div style={styles.statNumber}>24/7</div>
-            <div style={styles.statLabel}>AI Support</div>
-          </div>
-
-          <div style={styles.statBox}>
-            <div style={styles.statNumber}>16</div>
-            <div style={styles.statLabel}>AI Features</div>
-          </div>
-        </div>
-      </main>
+function CapabilityCard({ cap }) {
+  const Icon = cap.icon;
+  return (
+    <div className="flex gap-4 bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+      <div className={`w-10 h-10 rounded-xl ${cap.iconBg} flex items-center justify-center flex-shrink-0`}>
+        <Icon size={18} className={cap.iconColor} />
+      </div>
+      <div>
+        <p className="text-slate-800 font-semibold text-sm mb-1">{cap.title}</p>
+        <p className="text-slate-500 text-xs leading-relaxed">{cap.desc}</p>
+      </div>
     </div>
   );
-};
+}
 
-export default MainHome;
+// ─── PatientHome ──────────────────────────────────────────────────────────────
+
+/**
+ * Props:
+ *   patientName   string               — defaults to "Patient"
+ *   onNavigate    (id: string) => void — called when action card is clicked
+ *   onStartAnalysis () => void         — CTA button handler
+ */
+export default function MainPage({
+  patientName = "Patient",
+  onNavigate,
+  onStartAnalysis,
+}) {
+  return (
+    <div className="min-h-screen bg-slate-50 font-sans">
+
+      {/* ── Top Navigation Bar ── */}
+      <header className="bg-white border-b border-slate-100 shadow-sm sticky top-0 z-20">
+        <div className="max-w-6xl mx-auto px-6 py-3.5 flex items-center justify-between">
+          {/* Logo */}
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-sm">
+              <Sparkles size={13} className="text-white" />
+            </div>
+            <span className="text-slate-800 font-bold text-sm tracking-tight">PreventAI Health</span>
+          </div>
+
+          {/* Right actions */}
+          <div className="flex items-center gap-3">
+            <button className="relative text-slate-400 hover:text-blue-600 p-2 rounded-xl hover:bg-blue-50 transition-colors">
+              <Bell size={18} />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-400 rounded-full border-2 border-white" />
+            </button>
+            <div className="h-5 w-px bg-slate-200" />
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white text-xs font-bold">
+                {patientName[0]}
+              </div>
+              <span className="text-slate-700 text-sm font-medium hidden sm:block">{patientName}</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* ── 1. Welcome Hero — Full Width ── */}
+      <motion.section
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="relative w-full overflow-hidden"
+      >
+        {/* Background image */}
+        <img
+          src="https://images.unsplash.com/photo-1631217868264-e5b90bb7e133?w=1600&auto=format&fit=crop&q=80"
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover object-center"
+        />
+
+        {/* Blue gradient overlay — keeps text readable */}
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-700/92 via-blue-600/85 to-cyan-600/80" />
+
+        {/* Subtle ECG line at bottom */}
+        <div className="absolute bottom-0 left-0 right-0 h-16 opacity-10 pointer-events-none">
+          <svg viewBox="0 0 1200 64" preserveAspectRatio="none" className="w-full h-full">
+            <polyline
+              points="0,32 100,32 140,32 170,6 200,58 228,14 256,50 284,32 420,32 460,32 490,6 520,58 548,14 576,50 604,32 740,32 780,32 810,6 840,58 868,14 896,50 924,32 1200,32"
+              fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            />
+          </svg>
+        </div>
+
+        {/* Content */}
+        <div className="relative max-w-6xl mx-auto px-6 py-14 md:py-20 flex flex-col md:flex-row md:items-center justify-between gap-8">
+
+          {/* Left — text */}
+          <div>
+            {/* Floating badge */}
+            <motion.div
+              animate={{ y: [0, -5, 0] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm border border-white/25 rounded-full px-4 py-1.5 mb-6"
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
+              <span className="text-white text-xs font-semibold tracking-wide">AI Health Assistant Active</span>
+            </motion.div>
+
+            {/* Heading */}
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.65, delay: 0.15, ease: "easeOut" }}
+              className="text-white text-4xl md:text-5xl font-extrabold leading-tight mb-4 drop-shadow-sm"
+            >
+              Welcome back,{" "}
+              <span className="text-cyan-200">{patientName}</span>
+            </motion.h1>
+
+            {/* Subtitle */}
+            <motion.p
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.65, delay: 0.28, ease: "easeOut" }}
+              className="text-blue-100 text-base md:text-lg leading-relaxed max-w-lg"
+            >
+              Your AI health assistant is ready to help. Stay ahead of illness with early risk detection and personalized care.
+            </motion.p>
+          </div>
+
+          {/* Right — Quick Stats card */}
+          <motion.div
+            initial={{ opacity: 0, x: 24 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.65, delay: 0.38, ease: "easeOut" }}
+            whileHover={{ scale: 1.03 }}
+            className="flex-shrink-0 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl px-6 py-5 text-white space-y-3 w-full md:w-56 transition-transform duration-300 cursor-default"
+          >
+            <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest">Quick Stats</p>
+
+            {[
+              { label: "Health Score", value: "78/100", color: "text-cyan-200"    },
+              { label: "Risk Level",   value: "Low",    color: "text-emerald-300" },
+              { label: "Next Appt",    value: "Mar 2",  color: "text-white"       },
+            ].map((stat) => (
+              <div key={stat.label} className="flex items-center justify-between">
+                <span className="text-white/75 text-xs">{stat.label}</span>
+                <span className={`font-bold text-sm ${stat.color}`}>{stat.value}</span>
+              </div>
+            ))}
+
+            <div className="pt-2 border-t border-white/10">
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: "0%" }}
+                    animate={{ width: "78%" }}
+                    transition={{ duration: 1.2, delay: 0.7, ease: "easeOut" }}
+                    className="h-full bg-cyan-300 rounded-full"
+                  />
+                </div>
+                <span className="text-white/50 text-[10px]">78%</span>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </motion.section>
+
+      <main className="max-w-6xl mx-auto px-6 py-10 space-y-12">
+
+        {/* ── 2. Main Action Cards ── */}
+        <section>
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h2 className="text-slate-900 font-bold text-lg">What would you like to do?</h2>
+              <p className="text-slate-400 text-sm mt-0.5">Select a feature to get started</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {ACTION_CARDS.map((card) => (
+              <ActionCard key={card.id} card={card} onNavigate={onNavigate} />
+            ))}
+          </div>
+        </section>
+
+        {/* ── 3. AI Capabilities Section ── */}
+        <section>
+          <div className="mb-5">
+            <span className="text-blue-600 text-xs font-bold uppercase tracking-widest">Powered by AI</span>
+            <h2 className="text-slate-900 font-bold text-lg mt-1">What our AI can do for you</h2>
+            <p className="text-slate-400 text-sm mt-0.5">Clinical-grade intelligence working in the background, for you.</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {AI_CAPABILITIES.map((cap) => (
+              <CapabilityCard key={cap.title} cap={cap} />
+            ))}
+          </div>
+        </section>
+
+        {/* ── 4. Info / Alert Section ── */}
+        <section>
+          <div className="flex gap-4 bg-blue-50 border border-blue-100 rounded-2xl p-5">
+            <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center">
+              <Info size={17} className="text-blue-600" />
+            </div>
+            <div>
+              <p className="text-slate-800 font-semibold text-sm mb-1">Medical Disclaimer</p>
+              <p className="text-slate-600 text-xs leading-relaxed">
+                PreventAI Health provides AI-generated health information for educational and preventive purposes only.
+                It is <strong>not a substitute</strong> for professional medical advice, diagnosis, or treatment.
+                Always consult a qualified healthcare provider for personal medical concerns.
+                In case of a medical emergency, call your local emergency services immediately.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* ── 5. Call To Action ── */}
+        <section className="bg-white border border-slate-100 rounded-3xl shadow-sm p-8 md:p-10 text-center">
+          <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-4">
+            <Stethoscope size={22} className="text-blue-600" />
+          </div>
+          <h2 className="text-slate-900 font-extrabold text-2xl mb-2">
+            Not feeling well?
+          </h2>
+          <p className="text-slate-500 text-sm max-w-sm mx-auto leading-relaxed mb-6">
+            Describe your symptoms and our AI will assess your health risk in under 60 seconds — completely private and secure.
+          </p>
+          <button
+            onClick={onStartAnalysis}
+            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold px-7 py-3.5 rounded-xl shadow-md shadow-blue-200 hover:shadow-lg hover:shadow-blue-200 hover:-translate-y-0.5 transition-all duration-200 text-sm"
+          >
+            Start Symptom Analysis
+            <ArrowRight size={15} />
+          </button>
+          <p className="text-slate-400 text-xs mt-4">Free · Private · No account required for trial</p>
+        </section>
+
+      </main>
+
+      {/* ── Footer ── */}
+      <footer className="border-t border-slate-100 bg-white mt-12">
+        <div className="max-w-6xl mx-auto px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <div className="w-5 h-5 rounded-md bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center">
+              <Sparkles size={9} className="text-white" />
+            </div>
+            <span className="text-slate-500 text-xs">© 2025 PreventAI Health Technologies</span>
+          </div>
+          <div className="flex items-center gap-5 text-xs text-slate-400">
+            {["Privacy Policy", "Terms of Service", "Support"].map((l) => (
+              <a key={l} href="#" className="hover:text-blue-600 transition-colors">{l}</a>
+            ))}
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+// ─── Demo (default export for preview) ───────────────────────────────────────
+
