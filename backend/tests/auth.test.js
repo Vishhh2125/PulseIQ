@@ -2,6 +2,7 @@ import request from "supertest";
 import app from "../App.js";
 import User from "../models/user.model.js";
 import Doctor from "../models/doctor.model.js";
+import Patient from "../models/patient.model.js";
 import mongoose from "mongoose";
 
 describe("Authentication & Doctor Registration Tests", () => {
@@ -9,6 +10,9 @@ describe("Authentication & Doctor Registration Tests", () => {
     username: "patient_test",
     email: "patient@test.com",
     password: "password123",
+    dob: "1990-01-20",
+    bloodGroup: "O+",
+    gender: "female",
   };
 
   const doctorData = {

@@ -2,6 +2,7 @@ import request from "supertest";
 import app from "../App.js";
 import User from "../models/user.model.js";
 import Doctor from "../models/doctor.model.js";
+import Patient from "../models/patient.model.js";
 import Appointment from "../models/appointment.model.js";
 
 describe("Appointment API Tests", () => {
@@ -9,6 +10,9 @@ describe("Appointment API Tests", () => {
     username: "appt_patient",
     email: "appt_patient@test.com",
     password: "password123",
+    dob: "1995-06-15",
+    bloodGroup: "B+",
+    gender: "male",
   };
 
   const doctorData = {
@@ -81,6 +85,7 @@ describe("Appointment API Tests", () => {
 
   afterAll(async () => {
     await Appointment.deleteMany({});
+    await Patient.deleteMany({});
     await User.deleteMany({ email: { $in: [patientData.email, doctorData.email] } });
     await Doctor.deleteMany({ licenseNumber: doctorData.licenseNumber });
   });

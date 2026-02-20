@@ -1,6 +1,7 @@
 import request from "supertest";
 import app from "../App.js";
 import User from "../models/user.model.js";
+import Patient from "../models/patient.model.js";
 
 const REGISTER_PATIENT = "/api/v1/users/auth/register/patient";
 const LOGIN = "/api/v1/users/login";
@@ -10,14 +11,19 @@ describe("User API Tests", () => {
     username: "testuser123",
     email: "test@example.com",
     password: "password123",
+    dob: "2000-07-25",
+    bloodGroup: "AB+",
+    gender: "male",
   };
 
   beforeEach(async () => {
+    await Patient.deleteMany({});
     await User.deleteOne({ email: testUser.email });
     await User.deleteOne({ email: "different@example.com" });
   });
 
   afterAll(async () => {
+    await Patient.deleteMany({});
     await User.deleteMany({ email: { $in: [testUser.email, "different@example.com"] } });
   });
 
@@ -62,6 +68,39 @@ describe("User API Tests", () => {
 
       expect(res.statusCode).toBe(400);
       expect(res.body.message).toContain("at least 6 characters");
+    });
+
+    it("should return error if dob is missing", async () => {
+      const { dob, ...withoutDob } = testUser;
+      const res = await request(app).post(REGISTER_PATIENT).send(withoutDob);
+      expect(res.statusCode).toBe(400);
+      expect(res.body.message).toContain("Date of birth is required");
+    });
+
+    it("should return error if bloodGroup is missing", async () => {
+      const { bloodGroup, ...withoutBloodGroup } = testUser;
+      const res = await request(app).post(REGISTER_PATIENT).send(withoutBloodGroup);
+      expect(res.statusCode).toBe(400);
+      expect(res.body.message).toContain("Blood group is required");
+    });
+
+    it("should return error if gender is missing", async () => {
+      const { gender, ...withoutGender } = testUser;
+      const res = await request(app).post(REGISTER_PATIENT).send(withoutGender);
+      expect(res.statusCode).toBe(400);
+      expect(res.body.message).toContain("Gender is required");
+    });
+
+    it("should return error for invalid bloodGroup", async () => {
+      const res = await request(app).post(REGISTER_PATIENT).send({ ...testUser, bloodGroup: "X+" });
+      expect(res.statusCode).toBe(400);
+      expect(res.body.message).toContain("Invalid blood group");
+    });
+
+    it("should return error for invalid gender", async () => {
+      const res = await request(app).post(REGISTER_PATIENT).send({ ...testUser, gender: "robot" });
+      expect(res.statusCode).toBe(400);
+      expect(res.body.message).toContain("Invalid gender");
     });
   });
 

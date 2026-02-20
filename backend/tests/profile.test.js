@@ -2,6 +2,7 @@ import request from "supertest";
 import app from "../App.js";
 import User from "../models/user.model.js";
 import Doctor from "../models/doctor.model.js";
+import Patient from "../models/patient.model.js";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 
@@ -10,6 +11,9 @@ describe("User Profile API Tests", () => {
     username: "profile_patient",
     email: "profile_patient@test.com",
     password: "password123",
+    dob: "1998-03-10",
+    bloodGroup: "A-",
+    gender: "female",
   };
 
   const doctorData = {
@@ -108,6 +112,7 @@ describe("User Profile API Tests", () => {
   });
 
   afterAll(async () => {
+    await Patient.deleteMany({});
     await User.deleteMany({
       email: { $in: [patientData.email, doctorData.email] },
     });
@@ -160,6 +165,19 @@ describe("User Profile API Tests", () => {
 
       expect(res.statusCode).toBe(200);
       expect(res.body.data.doctor).toBeUndefined();
+    });
+
+    it("should return patient profile with dob, bloodGroup, gender", async () => {
+      const res = await request(app)
+        .get("/api/v1/users/profile")
+        .set("Authorization", `Bearer ${patientAccessToken}`);
+
+      expect(res.statusCode).toBe(200);
+      const patient = res.body.data.patient;
+      expect(patient).toBeTruthy();
+      expect(patient.bloodGroup).toBe(patientData.bloodGroup);
+      expect(patient.gender).toBe(patientData.gender);
+      expect(patient.dob).toBeTruthy();
     });
 
     it("should reject request without token", async () => {

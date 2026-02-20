@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import User from "../models/user.model.js";
 import Doctor from "../models/doctor.model.js";
+import Patient from "../models/patient.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
@@ -8,13 +9,24 @@ import jwt from "jsonwebtoken";
 
 // ─── Register Patient ───────────────────────────────────────────────────────
 const registerPatient = asyncHandler(async (req, res) => {
-  const { username, email, password } = req.body;
+  const { username, email, password, dob, bloodGroup, gender } = req.body;
 
   if (!username) throw new ApiError(400, "Username is required");
   if (!email) throw new ApiError(400, "Email is required");
   if (!password) throw new ApiError(400, "Password is required");
   if (password.length < 6)
     throw new ApiError(400, "Password must be at least 6 characters");
+  if (!dob) throw new ApiError(400, "Date of birth is required");
+  if (!bloodGroup) throw new ApiError(400, "Blood group is required");
+  if (!gender) throw new ApiError(400, "Gender is required");
+
+  const validBloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+  if (!validBloodGroups.includes(bloodGroup))
+    throw new ApiError(400, "Invalid blood group. Must be one of A+, A-, B+, B-, AB+, AB-, O+, O-");
+
+  const validGenders = ["male", "female", "other"];
+  if (!validGenders.includes(gender))
+    throw new ApiError(400, "Invalid gender. Must be male, female, or other");
 
   const existingByEmail = await User.findOne({ email });
   if (existingByEmail) throw new ApiError(400, "Email is already registered");
@@ -22,11 +34,36 @@ const registerPatient = asyncHandler(async (req, res) => {
   const existingByUsername = await User.findOne({ username });
   if (existingByUsername) throw new ApiError(400, "Username is already taken");
 
-  const user = await User.create({ username, email, password, usertype: "patient" });
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const [user] = await User.create(
+      [{ username, email, password, usertype: "patient" }],
+      { session }
+    );
 
-  return res
-    .status(201)
-    .json(new ApiResponse(201, { userId: user._id }, "Patient registered successfully"));
+    const [patient] = await Patient.create(
+      [{ userId: user._id, dob: new Date(dob), bloodGroup, gender }],
+      { session }
+    );
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return res
+      .status(201)
+      .json(
+        new ApiResponse(
+          201,
+          { userId: user._id, patientId: patient._id },
+          "Patient registered successfully"
+        )
+      );
+  } catch (err) {
+    await session.abortTransaction();
+    session.endSession();
+    throw err;
+  }
 });
 
 // ─── Register Doctor ────────────────────────────────────────────────────────
@@ -264,6 +301,15 @@ const getCurrentUser = asyncHandler(async (req, res) => {
       .status(200)
       .json(
         new ApiResponse(200, { user: safeUser, doctor }, "User fetched successfully")
+      );
+  }
+
+  if (user.usertype === "patient") {
+    const patient = await Patient.findOne({ userId: user._id });
+    return res
+      .status(200)
+      .json(
+        new ApiResponse(200, { user: safeUser, patient }, "User fetched successfully")
       );
   }
 
