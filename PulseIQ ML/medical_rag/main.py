@@ -65,34 +65,48 @@ async def options_chat():
 # ✅ Dual Retrieval Chat Endpoint
 @app.post("/chat/")
 async def chat_with_medical_history(request: ChatRequest):
+    try:
+        user_context = retrieve_user_chunks(
+            query=request.question,
+            user_id=request.user_id,
+            k=3
+        )
 
-    user_context = retrieve_user_chunks(
-        query=request.question,
-        user_id=request.user_id,
-        k=3
-    )
+        global_context = retrieve_global_chunks(
+            query=request.question,
+            k=3
+        )
 
-    global_context = retrieve_global_chunks(
-        query=request.question,
-        k=3
-    )
+        personalized = True if user_context else False
 
-    personalized = True if user_context else False
+        prompt = build_medical_prompt(
+            user_question=request.question,
+            user_context=user_context,
+            global_context=global_context,
+            watch_data=request.watch_data
+        )
 
-    prompt = build_medical_prompt(
-        user_question=request.question,
-        user_context=user_context,
-        global_context=global_context,
-        watch_data=request.watch_data
-    )
+        ai_response = generate_response(prompt)
 
-    ai_response = generate_response(prompt)
-
-    return {
-        "user_id": request.user_id,
-        "personalized_mode": personalized,
-        "final_response": ai_response
-    }
+        return {
+            "user_id": request.user_id,
+            "personalized_mode": personalized,
+            "final_response": ai_response
+        }
+    except Exception as e:
+        error_message = str(e)
+        if "quota exceeded" in error_message.lower():
+            return {
+                "error": "API quota exceeded",
+                "message": "Daily API limit reached. Please try again later or upgrade to a paid plan.",
+                "user_id": request.user_id,
+            }
+        else:
+            return {
+                "error": "Failed to generate response",
+                "message": error_message,
+                "user_id": request.user_id,
+            }
 
 # ✅ Upload User Medical Record (Updated DB Logic)
 @app.post("/upload-medical-record/")
