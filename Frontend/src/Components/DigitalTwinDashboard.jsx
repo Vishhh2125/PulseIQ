@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { mlAPI } from "../utils/api";
+import { formatMarkdownText } from "../utils/markdownFormatter.jsx";
 
 export default function DigitalTwinDashboard() {
   const navigate = useNavigate();
@@ -278,12 +279,12 @@ export default function DigitalTwinDashboard() {
                             </span>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-slate-900 font-medium text-sm mb-1">
-                              {chat.question}
+                            <p className="text-slate-900 font-medium text-sm mb-1 font-semibold">
+                              Q: {chat.question}
                             </p>
-                            <p className="text-slate-600 text-sm line-clamp-2">
-                              {chat.response}
-                            </p>
+                            <div className="text-slate-600 text-sm mb-2 space-y-1">
+                              {formatMarkdownText(chat.response)}
+                            </div>
                             <p className="text-xs text-slate-500 mt-2">
                               {formatDate(chat.created_at)}
                             </p>

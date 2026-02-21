@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { mlAPI } from "../utils/api";
+import { formatMarkdownText } from "../utils/markdownFormatter.jsx";
 
 export default function ChatBot() {
   const navigate = useNavigate();
@@ -198,9 +199,15 @@ export default function ChatBot() {
                       : "bg-white text-slate-700 border border-slate-100 shadow-sm rounded-2xl rounded-tl-md"
                   } px-4 py-3`}
                 >
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                    {message.text}
-                  </p>
+                  {message.type === "bot" && !message.isError ? (
+                    <div className="text-sm leading-relaxed space-y-1">
+                      {formatMarkdownText(message.text)}
+                    </div>
+                  ) : (
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                      {message.text}
+                    </p>
+                  )}
                   <div
                     className={`flex items-center gap-2 mt-2 ${
                       message.type === "user"
