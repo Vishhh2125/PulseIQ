@@ -119,30 +119,7 @@ export default function UserReportUpload() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-cyan-50/20">
-      {/* Header */}
-      <header className="bg-white/70 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-20 shadow-sm">
-        <div className="max-w-5xl mx-auto px-6 py-4">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="w-11 h-11 rounded-2xl bg-blue-600 flex items-center justify-center shadow-md shadow-blue-500/20">
-                <FileUp size={22} className="text-white" />
-              </div>
-              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white shadow-sm"></div>
-            </div>
-            <div>
-              <h1 className="text-gray-900 font-bold text-base">
-                Upload Medical Report
-              </h1>
-              <p className="text-gray-500 text-xs flex items-center gap-1.5 mt-0.5">
-                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                Secure AI Analysis
-              </p>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="grid md:grid-cols-2 min-h-[calc(100vh-60px)]">
+      <div className="grid md:grid-cols-2 min-h-screen">
         {/* LEFT PANEL - Instructions */}
         <motion.div
           initial={{ opacity: 0, x: -30 }}
@@ -152,14 +129,14 @@ export default function UserReportUpload() {
         >
           <div className="flex items-center gap-3 mb-4">
             <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/30">
-              <Sparkles size={24} className="text-white" />
+              <FileUp size={24} className="text-white" />
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-blue-900">
-              AI Report Analysis
+              Upload Reports
             </h2>
           </div>
           <p className="text-blue-600 mb-10 text-sm md:text-base leading-relaxed">
-            Upload your medical reports and our AI will analyze them to provide personalized health insights through the chatbot.
+            Upload your medical reports to save them to your health history. Your records are securely stored and accessible anytime.
           </p>
 
           <div className="space-y-4">
@@ -184,11 +161,11 @@ export default function UserReportUpload() {
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-blue-600 mt-0.5">•</span>
-                        <span>Click &quot;Upload & Analyze Report&quot;</span>
+                        <span>Click &quot;Upload Report&quot; to save it</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-blue-600 mt-0.5">•</span>
-                        <span>Ask AI about your results in the chatbot</span>
+                        <span>Your report is saved to your health history</span>
                       </li>
                     </ul>
                   </div>
@@ -367,7 +344,7 @@ export default function UserReportUpload() {
                     <h3 className="text-lg font-bold text-blue-900">Upload Successful!</h3>
                   </div>
                   <p className="text-gray-700 text-sm leading-relaxed">
-                    Your medical report has been processed. {uploadResult?.total_chunks_created} sections were analyzed and indexed.
+                    Your medical report has been saved to your health history successfully.
                   </p>
                 </motion.div>
               )}
@@ -403,8 +380,8 @@ export default function UserReportUpload() {
                     </>
                   ) : (
                     <>
-                      <Sparkles size={20} />
-                      Upload & Analyze Report
+                      <Upload size={20} />
+                      Upload Report
                     </>
                   )}
                 </span>
@@ -426,7 +403,7 @@ export default function UserReportUpload() {
                   className="w-full py-4 px-4 rounded-xl font-bold text-sm bg-gradient-to-r from-blue-600 to-cyan-500 text-white hover:from-blue-700 hover:to-cyan-600 transition-all flex items-center justify-center gap-2 shadow-xl shadow-blue-600/30"
                 >
                   <MessageCircle size={18} />
-                  Ask AI About Your Report
+                  Go to Chat
                 </motion.button>
                 <button
                   onClick={handleRemoveFile}
