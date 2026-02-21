@@ -11,7 +11,7 @@ import {
   MessageCircle,
   TrendingUp
 } from 'lucide-react';
-import AppNavbar from './AppNavbar';
+
 
 const API_BASE = 'http://localhost:5000/api';
 
@@ -117,7 +117,7 @@ export default function AssessmentFlow() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center">
-        <AppNavbar />
+       
         <div className="p-6 w-full flex justify-center">
           <div className="max-w-4xl w-full">
             <div className="bg-white border rounded-xl p-12 text-center">
@@ -142,18 +142,13 @@ export default function AssessmentFlow() {
   // ✅ MAIN UI
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center">
-      <AppNavbar />
+     
       {/* Header */}
       <div className="p-6 w-full flex justify-center">
         <div className="max-w-4xl w-full">
 
           <div className="flex items-center gap-3 mb-6">
-            <button
-              onClick={() => window.history.back()}
-              className="p-2 rounded-lg bg-gray-200 hover:bg-gray-300"
-            >
-              <ArrowLeft className="w-5 h-5 text-gray-800" />
-            </button>
+            
             <div>
               <h1 className="text-2xl font-bold text-gray-800">
                 Mental Health Assessment

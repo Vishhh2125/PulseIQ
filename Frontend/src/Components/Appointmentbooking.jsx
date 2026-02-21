@@ -583,28 +583,7 @@ export default function AppointmentBooking({ patientName = "Sarah", onBack }) {
 
       {/* ── Topbar ── */}
       <header className="bg-white border-b border-slate-100 shadow-sm sticky top-0 z-30">
-        <div className="max-w-6xl mx-auto px-6 py-3.5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-sm">
-                <Sparkles size={13} className="text-white" />
-              </div>
-              <span className="text-slate-800 font-bold text-sm tracking-tight">PreventAI Health</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <button className="relative text-slate-400 hover:text-blue-600 p-2 rounded-xl hover:bg-blue-50 transition-colors">
-              <Bell size={18} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-400 rounded-full border-2 border-white" />
-            </button>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white text-xs font-bold">
-                {patientName[0]}
-              </div>
-              <span className="text-slate-700 text-sm font-medium hidden sm:block">{patientName}</span>
-            </div>
-          </div>
-        </div>
+        
       </header>
 
       {/* ── Page header ── */}
@@ -612,13 +591,7 @@ export default function AppointmentBooking({ patientName = "Sarah", onBack }) {
         <div className="max-w-6xl mx-auto px-6 py-6 space-y-4">
 
           {/* ── Back button ── */}
-          <button
-            onClick={onBack || (() => window.history.back())}
-            className="inline-flex items-center gap-1.5 text-slate-500 hover:text-blue-600 text-sm font-semibold transition-colors group"
-          >
-            <ChevronLeft size={16} className="group-hover:-translate-x-0.5 transition-transform" />
-            Back to Dashboard
-          </button>
+          
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>

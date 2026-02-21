@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-
+import { useSelector } from "react-redux";
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
 const ACTION_CARDS = [
@@ -237,7 +237,10 @@ export default function MainPage({
   onStartAnalysis,
 }) {
   const navigate = useNavigate();
+const { user } = useSelector((state) => state.auth); // Get user from Redux
 
+  // Use user data from DB, fallback to prop
+  const displayName = user?.name || user?.username || patientName || "Patient";
   const handleNavigate = (id) => {
     if (onNavigateProp) {
       onNavigateProp(id);
@@ -318,7 +321,7 @@ export default function MainPage({
               className="text-white text-4xl md:text-5xl font-extrabold leading-tight mb-4 drop-shadow-sm"
             >
               Welcome back,{" "}
-              <span className="text-cyan-200">{patientName}</span>
+              <span className="text-cyan-200">{displayName}</span>
             </motion.h1>
 
             {/* Subtitle */}

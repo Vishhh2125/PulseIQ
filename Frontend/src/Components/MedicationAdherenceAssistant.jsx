@@ -1,323 +1,482 @@
-"use client";
-import React, { useState, useRef, useEffect } from "react";
-import { Camera, CheckCircle, XCircle, Plus, Loader2, Search, X } from "lucide-react";
+import { useState } from "react";
+import {
+  Sparkles,
+  Bell,
+  ChevronLeft,
+  Pill,
+  Plus,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  Calendar,
+  TrendingUp,
+  Info,
+  BellRing,
+  ArrowLeft,
+  Upload,
+  X,
+  Image as ImageIcon
+} from "lucide-react";
 
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-// Prefer 2.0 Flash for broader availability; 2.5 may require allowlist/billing
-const GEMINI_MODELS = ["gemini-2.0-flash"];
-const GEMINI_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
+// ─── Static Data ──────────────────────────────────────────────────────────────
 
-const MedicationAdherenceAssistant = () => {
-  // ✅ Local State instead of Redux
-  const [medications, setMedications] = useState([]);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showVerifyModal, setShowVerifyModal] = useState(false);
-  const [activeMedication, setActiveMedication] = useState(null);
-  const [capturedImage, setCapturedImage] = useState(null);
-  const [verificationStatus, setVerificationStatus] = useState("idle");
-  const [isLoading, setIsLoading] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
-  const [cameraError, setCameraError] = useState(null);
-  const [apiError, setApiError] = useState(null);
+const SAMPLE_MEDICATIONS = [
+  {
+    id: 1,
+    name: "Metformin",
+    dosage: "500mg",
+    frequency: "Twice daily",
+    time: "8:00 AM",
+    status: "Pending",
+    image: null,
+  },
+  {
+    id: 2,
+    name: "Lisinopril",
+    dosage: "10mg",
+    frequency: "Once daily",
+    time: "9:00 AM",
+    status: "Taken",
+    image: null,
+  },
+  {
+    id: 3,
+    name: "Aspirin",
+    dosage: "81mg",
+    frequency: "Once daily",
+    time: "7:00 PM",
+    status: "Missed",
+    image: null,
+  },
+];
 
-  const videoRef = useRef(null);
-  const canvasRef = useRef(null);
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
-  // 📊 Derived state
-  const takenCount = medications.filter((m) => m.taken).length;
-  const adherencePercentage =
-    medications.length === 0 ? 0 : (takenCount / medications.length) * 100;
-
-  const upcomingMedication = medications.find((m) => !m.taken);
-
-  // 🎥 Camera setup — handle permission denied/dismissed
-  useEffect(() => {
-    let stream;
-    const startCamera = async () => {
-      if (!showVerifyModal || capturedImage) {
-        setCameraError(null);
-        return;
-      }
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        setCameraError(null);
-        if (videoRef.current) videoRef.current.srcObject = stream;
-      } catch (err) {
-        const message =
-          err?.name === "NotAllowedError" || err?.message?.includes("Permission")
-            ? "Camera access denied or dismissed. You can still mark medication as taken below."
-            : "Camera unavailable.";
-        setCameraError(message);
-      }
-    };
-    startCamera();
-    return () => {
-      if (stream) stream.getTracks().forEach((t) => t.stop());
-    };
-  }, [showVerifyModal, capturedImage]);
-
-  // ➕ Add medication
-  const addMedication = (med) => {
-    setMedications((prev) => [
-      ...prev,
-      { ...med, id: Date.now(), taken: false },
-    ]);
-  };
-
-  // ❌ Delete
-  const deleteMedication = (id) => {
-    setMedications((prev) => prev.filter((m) => m.id !== id));
-  };
-
-  // ✅ Mark taken
-  const markAsTaken = (id) => {
-    setMedications((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, taken: true } : m))
-    );
-  };
-
-  // 📸 Capture image
-  const captureImage = () => {
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas.getContext("2d").drawImage(video, 0, 0);
-    setCapturedImage(canvas.toDataURL("image/png"));
-  };
-
-  // 🔍 Call Gemini (tries multiple models on 400/403)
-  const callGemini = async (payload) => {
-    if (!GEMINI_API_KEY) {
-      setApiError("Gemini API key not set. Add VITE_GEMINI_API_KEY in .env");
-      return null;
-    }
-    setApiError(null);
-    let lastError = null;
-    for (const model of GEMINI_MODELS) {
-      try {
-        const res = await fetch(`${GEMINI_BASE}/${model}:generateContent?key=${GEMINI_API_KEY}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        const data = await res.json();
-        if (!res.ok) {
-          lastError = data?.error?.message || `HTTP ${res.status}`;
-          continue;
-        }
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (text != null) return text;
-      } catch (e) {
-        lastError = e.message;
-      }
-    }
-    setApiError(lastError || "AI service unavailable. Check API key and quota.");
-    return null;
-  };
-
-  // 🔍 Verify pill using Gemini
-  const verifyPillIntake = async () => {
-    if (!capturedImage || !activeMedication) return;
-    setIsLoading(true);
-    setVerificationStatus("idle");
-    setApiError(null);
-
-    const base64 = capturedImage.split(",")[1];
-    const payload = {
-      contents: [
-        {
-          parts: [
-            { text: "Does the image show a pill? Reply YES or NO." },
-            { inlineData: { mimeType: "image/png", data: base64 } },
-          ],
-        },
-      ],
-    };
-
-    const text = await callGemini(payload);
-    if (text?.toUpperCase().includes("YES")) {
-      setVerificationStatus("success");
-      markAsTaken(activeMedication.id);
-    } else if (text != null) {
-      setVerificationStatus("failure");
-    } else {
-      setVerificationStatus("failure");
-    }
-
-    setIsLoading(false);
-  };
-
-  // 🔎 Search meds via Gemini
-  const searchMedications = async () => {
-    if (!searchQuery) return;
-
-    const payload = {
-      contents: [
-        {
-          parts: [
-            {
-              text: `Return 3 medications related to "${searchQuery}" in JSON format with name and dosage.`,
-            },
-          ],
-        },
-      ],
-    };
-
-    const text = await callGemini(payload);
-    if (text) {
-      const match = text.match(/\[[\s\S]*\]/);
-      if (match) {
-        try {
-          setSearchResults(JSON.parse(match[0]));
-        } catch {
-          setSearchResults([]);
-        }
-      }
+function MedicationCard({ medication, onMarkTaken, onRemoveImage }) {
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case "Taken":
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-100">
+            <CheckCircle2 size={10} />
+            Taken
+          </span>
+        );
+      case "Missed":
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-red-50 text-red-600 border border-red-100">
+            <XCircle size={10} />
+            Missed
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-semibold bg-amber-50 text-amber-600 border border-amber-100">
+            <Clock size={10} />
+            Pending
+          </span>
+        );
     }
   };
 
   return (
-    <div className="min-h-screen bg-blue-50 p-6">
-      <h1 className="text-3xl font-bold mb-6">Medication Assistant</h1>
-
-      {apiError && (
-        <div className="mb-4 p-3 bg-amber-100 border border-amber-300 rounded-lg text-sm text-amber-800">
-          {apiError}
-        </div>
-      )}
-
-      {/* Progress */}
-      <div className="mb-6">
-        <p className="font-semibold">Adherence: {adherencePercentage.toFixed(0)}%</p>
-      </div>
-
-      {/* Upcoming */}
-      {upcomingMedication && (
-        <div className="bg-white p-4 rounded-xl shadow mb-6">
-          <h2 className="font-bold text-lg">Up Next</h2>
-          <p>{upcomingMedication.name}</p>
-          <button
-            onClick={() => {
-              setActiveMedication(upcomingMedication);
-              setShowVerifyModal(true);
-            }}
-            className="mt-2 bg-blue-600 text-white px-4 py-2 rounded"
-          >
-            Verify Intake
-          </button>
-        </div>
-      )}
-
-      {/* Medication List */}
-      <div className="grid gap-4">
-        {medications.map((med) => (
-          <div key={med.id} className="bg-white p-4 rounded-xl shadow flex justify-between">
-            <div>
-              <p className={med.taken ? "line-through" : ""}>{med.name}</p>
-              <p className="text-sm text-gray-500">{med.dose}</p>
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-200 p-5">
+      <div className="flex items-start justify-between gap-4">
+        {/* Medicine Image or Icon */}
+        <div className="flex-shrink-0">
+          {medication.image ? (
+            <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-200">
+              <img 
+                src={medication.image} 
+                alt={medication.name}
+                className="w-full h-full object-cover"
+              />
+              <button
+                onClick={() => onRemoveImage(medication.id)}
+                className="absolute top-1 right-1 p-1 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+              >
+                <X size={12} />
+              </button>
             </div>
-            <button onClick={() => deleteMedication(med.id)}>
-              <X />
-            </button>
+          ) : (
+            <div className="w-16 h-16 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+              <Pill size={24} className="text-blue-600" />
+            </div>
+          )}
+        </div>
+
+        {/* Medicine Info */}
+        <div className="flex-1">
+          <div className="flex items-start justify-between gap-2 mb-2">
+            <div>
+              <h3 className="text-slate-900 font-bold text-sm mb-1">{medication.name}</h3>
+              <p className="text-slate-600 text-xs mb-2">{medication.dosage}</p>
+            </div>
+            {getStatusBadge(medication.status)}
           </div>
-        ))}
-      </div>
+          <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+            <span className="flex items-center gap-1">
+              <Clock size={11} />
+              {medication.time}
+            </span>
+            <span className="text-slate-300">•</span>
+            <span>{medication.frequency}</span>
+          </div>
+        </div>
 
-      {/* Add Button */}
-      <button
-        onClick={() => setShowAddModal(true)}
-        className="fixed bottom-6 right-6 bg-blue-600 text-white p-4 rounded-full shadow-lg"
-      >
-        <Plus />
-      </button>
-
-      {/* Add Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              addMedication({
-                name: e.target.name.value,
-                dose: e.target.dose.value,
-              });
-              setShowAddModal(false);
-            }}
-            className="bg-white p-6 rounded-xl"
+        {/* Action Button */}
+        {medication.status === "Pending" && (
+          <button
+            onClick={() => onMarkTaken(medication.id)}
+            className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 flex-shrink-0"
           >
-            <input name="name" placeholder="Name" className="border p-2 mb-2 w-full" />
-            <input name="dose" placeholder="Dose" className="border p-2 mb-2 w-full" />
-            <button className="bg-blue-600 text-white px-4 py-2 rounded w-full">
-              Add
-            </button>
-          </form>
-        </div>
-      )}
-
-      {/* Verify Modal */}
-      {showVerifyModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-xl text-center max-w-md">
-            {cameraError ? (
-              <div className="mb-4">
-                <p className="text-sm text-amber-700 mb-4">{cameraError}</p>
-                <button
-                  onClick={() => {
-                    setCameraError(null);
-                    setVerificationStatus("success");
-                    markAsTaken(activeMedication?.id);
-                    setShowVerifyModal(false);
-                    setCapturedImage(null);
-                    setActiveMedication(null);
-                  }}
-                  className="bg-blue-600 text-white px-4 py-2 rounded"
-                >
-                  Mark as taken without camera
-                </button>
-              </div>
-            ) : !capturedImage ? (
-              <>
-                <video ref={videoRef} autoPlay playsInline muted className="mb-4 w-full rounded" />
-                <button onClick={captureImage} className="bg-blue-600 text-white px-4 py-2 rounded">
-                  Capture
-                </button>
-              </>
-            ) : (
-              <>
-                <img src={capturedImage} className="mb-4" />
-                <button
-                  onClick={verifyPillIntake}
-                  className="bg-green-600 text-white px-4 py-2 rounded"
-                >
-                  Verify
-                </button>
-              </>
-            )}
-
-            {isLoading && <Loader2 className="animate-spin mx-auto mt-4" />}
-            {verificationStatus === "success" && <CheckCircle className="text-green-500 mx-auto" />}
-            {verificationStatus === "failure" && <XCircle className="text-red-500 mx-auto" />}
-            <button
-              type="button"
-              onClick={() => {
-                setShowVerifyModal(false);
-                setCapturedImage(null);
-                setActiveMedication(null);
-                setCameraError(null);
-                setVerificationStatus("idle");
-              }}
-              className="mt-4 text-gray-500 text-sm underline"
-            >
-              Close
-            </button>
-          </div>
-          <canvas ref={canvasRef} className="hidden"></canvas>
-        </div>
-      )}
+            <CheckCircle2 size={12} />
+            Mark as Taken
+          </button>
+        )}
+      </div>
     </div>
   );
-};
+}
 
-export default MedicationAdherenceAssistant;
+// Image Upload Preview Component
+function ImageUploadPreview({ image, onRemove, medicationName }) {
+  if (!image) return null;
+
+  return (
+    <div className="relative w-full h-48 rounded-xl overflow-hidden border-2 border-blue-200 bg-blue-50 mt-2">
+      <img 
+        src={image} 
+        alt={`${medicationName} preview`}
+        className="w-full h-full object-cover"
+      />
+      <button
+        onClick={onRemove}
+        className="absolute top-2 right-2 p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors shadow-md"
+      >
+        <X size={16} />
+      </button>
+    </div>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
+export default function MedicationAdherenceAssistant({ patientName = "Sarah", onBack }) {
+  const [medications, setMedications] = useState(SAMPLE_MEDICATIONS);
+  const [formData, setFormData] = useState({
+    name: "",
+    dosage: "",
+    frequency: "Once daily",
+    time: "",
+    image: null,
+  });
+  const [showCustomTime, setShowCustomTime] = useState(false);
+  const [imagePreview, setImagePreview] = useState(null);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please upload a valid image file');
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image size must be less than 5MB');
+        return;
+      }
+
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+        setFormData((prev) => ({ ...prev, image: reader.result }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setImagePreview(null);
+    setFormData((prev) => ({ ...prev, image: null }));
+  };
+
+  const handleAddMedication = (e) => {
+    e.preventDefault();
+    if (formData.name && formData.dosage && formData.time) {
+      const newMedication = {
+        id: medications.length + 1,
+        name: formData.name,
+        dosage: formData.dosage,
+        frequency: formData.frequency,
+        time: formData.time,
+        status: "Pending",
+        image: formData.image,
+      };
+      setMedications([...medications, newMedication]);
+      setFormData({
+        name: "",
+        dosage: "",
+        frequency: "Once daily",
+        time: "",
+        image: null,
+      });
+      setImagePreview(null);
+      setShowCustomTime(false);
+    }
+  };
+
+  const handleMarkTaken = (id) => {
+    setMedications(
+      medications.map((med) => (med.id === id ? { ...med, status: "Taken" } : med))
+    );
+  };
+
+  const handleRemoveMedicationImage = (id) => {
+    setMedications(
+      medications.map((med) => 
+        med.id === id ? { ...med, image: null } : med
+      )
+    );
+  };
+
+  const adherencePercentage = 85; // Static for now
+
+  return (
+    <div className="min-h-screen bg-slate-50 font-sans">
+      {/* ── Top Navigation Bar ── */}
+      <header className="bg-white border-b border-slate-100 shadow-sm sticky top-0 z-20">
+        
+      </header>
+
+      {/* ── Page Header ── */}
+      <div className="bg-white border-b border-slate-100">
+        <div className="max-w-6xl mx-auto px-6 py-6 space-y-4">
+          
+
+          <div>
+            <h1 className="text-slate-900 font-extrabold text-2xl mb-2">Medication Adherence Tracker</h1>
+            <p className="text-slate-400 text-sm">
+              Track your medicine schedule and stay consistent with treatment.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <main className="max-w-6xl mx-auto px-6 py-8 space-y-8">
+        {/* ── Add Medication Section ── */}
+        <section className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+          <div className="flex items-center gap-2 mb-5">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+              <Plus size={18} className="text-blue-600" />
+            </div>
+            <h2 className="text-slate-900 font-bold text-lg">Add Medication</h2>
+          </div>
+
+          <form onSubmit={handleAddMedication} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-slate-700 text-xs font-semibold mb-1.5">
+                  Medicine Name
+                </label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Metformin"
+                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-700 text-xs font-semibold mb-1.5">Dosage</label>
+                <input
+                  type="text"
+                  name="dosage"
+                  value={formData.dosage}
+                  onChange={handleInputChange}
+                  placeholder="e.g., 500mg"
+                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-slate-700 text-xs font-semibold mb-1.5">Frequency</label>
+                <select
+                  name="frequency"
+                  value={formData.frequency}
+                  onChange={(e) => {
+                    handleInputChange(e);
+                    setShowCustomTime(e.target.value === "Custom");
+                  }}
+                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all"
+                  required
+                >
+                  <option value="Once daily">Once daily</option>
+                  <option value="Twice daily">Twice daily</option>
+                  <option value="Thrice daily">Thrice daily</option>
+                  <option value="Custom">Custom</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-slate-700 text-xs font-semibold mb-1.5">Time</label>
+                <input
+                  type="time"
+                  name="time"
+                  value={formData.time}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all"
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Image Upload Section */}
+            <div>
+              <label className="block text-slate-700 text-xs font-semibold mb-1.5">Medicine Image (Optional)</label>
+              <div className="relative">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                  id="medicine-image-upload"
+                />
+                <label
+                  htmlFor="medicine-image-upload"
+                  className="block w-full px-4 py-3 border-2 border-dashed border-slate-300 rounded-xl text-center cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all duration-200"
+                >
+                  <div className="flex flex-col items-center gap-2">
+                    <ImageIcon size={20} className="text-slate-400" />
+                    <span className="text-xs font-semibold text-slate-600">
+                      Click to upload or drag and drop
+                    </span>
+                    <span className="text-[10px] text-slate-400">PNG, JPG, GIF up to 5MB</span>
+                  </div>
+                </label>
+              </div>
+
+              {/* Image Preview */}
+              {imagePreview && (
+                <ImageUploadPreview 
+                  image={imagePreview} 
+                  onRemove={handleRemoveImage}
+                  medicationName={formData.name}
+                />
+              )}
+            </div>
+
+            <button
+              type="submit"
+              className="w-full md:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold rounded-xl shadow-md shadow-blue-200 hover:shadow-lg hover:shadow-blue-200 hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <Plus size={16} />
+              Add Medication
+            </button>
+          </form>
+        </section>
+
+        {/* ── Today's Medications Section ── */}
+        <section>
+          <div className="flex items-center justify-between mb-5">
+            <div>
+              <h2 className="text-slate-900 font-bold text-lg">Today's Medications</h2>
+              <p className="text-slate-400 text-sm mt-0.5">
+                {medications.length} medication{medications.length !== 1 ? "s" : ""} scheduled
+              </p>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <Calendar size={14} />
+              <span>{new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</span>
+            </div>
+          </div>
+
+          {medications.length > 0 ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {medications.map((medication) => (
+                <MedicationCard
+                  key={medication.id}
+                  medication={medication}
+                  onMarkTaken={handleMarkTaken}
+                  onRemoveImage={handleRemoveMedicationImage}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-12 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center mx-auto mb-4">
+                <Pill size={24} className="text-slate-300" />
+              </div>
+              <p className="text-slate-700 font-semibold mb-1">No medications scheduled</p>
+              <p className="text-slate-400 text-sm">Add your first medication above to get started</p>
+            </div>
+          )}
+        </section>
+
+        {/* ── Adherence Summary Section ── */}
+        <section className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+          <div className="flex items-center gap-2 mb-5">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+              <TrendingUp size={18} className="text-blue-600" />
+            </div>
+            <h2 className="text-slate-900 font-bold text-lg">Adherence Summary</h2>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-slate-600 text-sm font-semibold">Weekly Adherence</span>
+                <span className="text-blue-600 font-extrabold text-2xl">{adherencePercentage}%</span>
+              </div>
+              <div className="h-3 bg-slate-100 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full transition-all duration-500"
+                  style={{ width: `${adherencePercentage}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-start gap-2 bg-emerald-50 border border-emerald-100 rounded-xl p-3">
+              <CheckCircle2 size={16} className="text-emerald-600 flex-shrink-0 mt-0.5" />
+              <p className="text-emerald-700 text-sm">
+                Great job! Keep maintaining consistency.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Reminder Info Box ── */}
+        <section className="bg-blue-50 border border-blue-100 rounded-2xl p-5">
+          <div className="flex gap-4">
+            <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-blue-100 flex items-center justify-center">
+              <BellRing size={17} className="text-blue-600" />
+            </div>
+            <div>
+              <p className="text-slate-800 font-semibold text-sm mb-1">Reminder Notifications</p>
+              <p className="text-slate-600 text-xs leading-relaxed">
+                You'll receive push notifications and email reminders 30 minutes before each scheduled medication time.
+                Reminders help you stay on track with your treatment plan and improve adherence rates.
+                You can manage notification preferences in your account settings.
+              </p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+}

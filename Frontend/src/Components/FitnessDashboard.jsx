@@ -236,7 +236,7 @@ const FitnessDashboard = () => {
 
   return (
     <div className="fitness-dashboard">
-      <AppNavbar />
+      
       <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -244,15 +244,7 @@ const FitnessDashboard = () => {
         className="fd-header"
       >
         <div className="fd-header-left">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => navigate("/main")}
-            className="fd-back-btn"
-            aria-label="Go back"
-          >
-            <ArrowLeft size={20} />
-          </motion.button>
+          
           <div>
             <motion.h1
               initial={{ opacity: 0, x: -20 }}
