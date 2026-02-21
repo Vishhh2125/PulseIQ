@@ -17,6 +17,8 @@ import {
   Activity,
   MessageCircle,
   ListChecks,
+  ScanFace,
+  Apple,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -122,6 +124,28 @@ const ACTION_CARDS = [
     border: "border-teal-100",
     tag: "New",
     tagColor: "bg-teal-50 text-teal-600",
+  },
+  {
+    id: "skinDetection",
+    icon: ScanFace,
+    label: "Skin Detection",
+    desc: "Upload a skin image for AI-powered analysis and early detection of skin concerns.",
+    iconBg: "bg-pink-100",
+    iconColor: "text-pink-600",
+    border: "border-pink-100",
+    tag: null,
+    tagColor: "",
+  },
+  {
+    id: "nutrition",
+    icon: Apple,
+    label: "Nutrition Planner",
+    desc: "Plan daily meals, track calories and macros, and meet your nutrition goals.",
+    iconBg: "bg-lime-100",
+    iconColor: "text-lime-600",
+    border: "border-lime-100",
+    tag: null,
+    tagColor: "",
   },
 ];
 
@@ -230,6 +254,8 @@ export default function MainPage({
       appointment: "/appointment",
       fitness: "/fitness-dashboard",
       assessment: "/assessment",
+      skinDetection: "/skin-detection",
+      nutrition: "/nutrition-planner",
     };
 
     if (routes[id]) {

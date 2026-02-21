@@ -10,11 +10,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@reduxjs/toolkit": "^2.11.2",
     "axios": "^1.13.5",
     "chart.js": "^4.5.1",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
     "framer-motion": "^12.34.3",
     "lucide-react": "^0.574.0",
+    "multer": "^2.0.2",
     "react": "^19.2.0",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "^19.2.0",

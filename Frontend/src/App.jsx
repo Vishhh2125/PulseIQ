@@ -11,6 +11,8 @@ import FitnessDashboard from './Components/FitnessDashboard.jsx';
 import ChatBot from './Components/ChatBot.jsx';
 import UserReportUpload from './Components/UserReportUpload.jsx';
 import Assessment from './Components/Assessment.jsx';
+import SkinDetection from './Components/SkinDetection.jsx';
+import NutritionPlanner from './Components/NutritionPlanner.jsx';
 import { getCurrentUser } from './store/authSlice.js';
 
 // Generic auth guard (any logged-in user)
@@ -102,6 +104,26 @@ function App() {
         element={
           <PatientRoute>
             <Assessment />
+          </PatientRoute>
+        }
+      />
+
+      {/* Skin Detection */}
+      <Route
+        path="/skin-detection"
+        element={
+          <PatientRoute>
+            <SkinDetection />
+          </PatientRoute>
+        }
+      />
+
+      {/* Nutrition Planner */}
+      <Route
+        path="/nutrition-planner"
+        element={
+          <PatientRoute>
+            <NutritionPlanner />
           </PatientRoute>
         }
       />
