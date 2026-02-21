@@ -11,6 +11,8 @@ import {
   X,
   Sparkles,
   MessageCircle,
+  Shield,
+  FileSearch,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { mlAPI } from "../utils/api";
@@ -116,7 +118,7 @@ export default function UserReportUpload() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-cyan-50/20">
       {/* Header */}
       <header className="bg-white/70 backdrop-blur-lg border-b border-gray-200/50 sticky top-0 z-20 shadow-sm">
         <div className="max-w-5xl mx-auto px-6 py-4">
@@ -140,223 +142,302 @@ export default function UserReportUpload() {
         </div>
       </header>
 
-      {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        {/* Info Banner */}
+      <div className="grid md:grid-cols-2 min-h-[calc(100vh-60px)]">
+        {/* LEFT PANEL - Instructions */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="relative bg-white/40 backdrop-blur-xl border border-white/60 rounded-2xl p-6 mb-8 overflow-hidden shadow-xl"
+          initial={{ opacity: 0, x: -30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6 }}
+          className="p-8 md:p-12 flex flex-col justify-center bg-white/40 backdrop-blur-xl md:border-r md:border-white/60"
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-cyan-500/10"></div>
-          <div className="relative flex items-start gap-4 z-10">
-            <motion.div
-              animate={{ rotate: [0, 10, -10, 0] }}
-              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              className="w-12 h-12 rounded-xl bg-blue-600/90 backdrop-blur-md flex items-center justify-center flex-shrink-0 border border-white/20 shadow-lg"
-            >
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-blue-500/30">
               <Sparkles size={24} className="text-white" />
-            </motion.div>
-            <div>
-              <p className="text-gray-900 text-base font-bold mb-2">
-                AI-Powered Report Analysis
-              </p>
-              <p className="text-gray-700 text-sm leading-relaxed">
-                Upload your medical reports (lab results, scans, prescriptions) and our AI will analyze them to provide personalized health insights through the chatbot.
-              </p>
             </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-blue-900">
+              AI Report Analysis
+            </h2>
           </div>
-          <div className="absolute top-0 right-0 w-40 h-40 bg-blue-400/10 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-0 w-32 h-32 bg-cyan-400/10 rounded-full blur-2xl"></div>
-        </motion.div>
-
-        {/* Upload Area */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          onClick={() => !file && fileInputRef.current?.click()}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          className={`relative bg-white/60 backdrop-blur-xl border-2 border-dashed transition-all duration-300 overflow-hidden shadow-lg ${
-            isDragging
-              ? "border-blue-600 bg-blue-50/50 shadow-2xl shadow-blue-500/20 scale-[1.02]"
-              : file
-              ? "border-gray-300 cursor-default"
-              : "border-gray-300 hover:border-blue-500 hover:shadow-2xl hover:shadow-blue-500/10 cursor-pointer group"
-          } p-12`}
-        >
-          {!file && !isDragging && (
-            <div className="absolute inset-0 bg-blue-50/0 group-hover:bg-blue-50/30 transition-all duration-300"></div>
-          )}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".pdf,application/pdf"
-            onChange={handleFileSelect}
-            className="hidden"
-          />
-
-          <AnimatePresence mode="wait">
-            {!file ? (
-              <motion.div
-                key="upload-prompt"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex flex-col items-center text-center relative z-10"
-              >
-                <div className="w-20 h-20 rounded-full bg-blue-600/10 backdrop-blur-md flex items-center justify-center mb-5 border border-blue-600/20">
-                  <Upload size={32} className="text-blue-600" />
-                </div>
-                <p className="text-gray-900 font-semibold text-base mb-2">
-                  Drop your PDF file here
-                </p>
-                <p className="text-gray-600 text-sm mb-4">
-                  or click to browse from your device
-                </p>
-                <p className="text-gray-400 text-xs">
-                  Maximum file size: 10MB • PDF format only
-                </p>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="file-preview"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="flex items-center gap-4"
-              >
-                <div className="w-16 h-16 rounded-lg bg-red-50 flex items-center justify-center flex-shrink-0">
-                  <FileText size={28} className="text-red-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-gray-900 font-semibold text-sm truncate">
-                    {file.name}
-                  </p>
-                  <p className="text-gray-500 text-sm mt-0.5">
-                    {formatFileSize(file.size)}
-                  </p>
-                </div>
-                {!isUploading && uploadStatus !== "success" && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRemoveFile();
-                    }}
-                    className="p-2.5 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    <X size={20} className="text-gray-400 hover:text-gray-600" />
-                  </button>
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
-
-        {/* Error Message */}
-        {error && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4 flex items-center gap-3"
-          >
-            <AlertCircle size={20} className="text-red-600 flex-shrink-0" />
-            <p className="text-red-700 text-sm font-medium">{error}</p>
-          </motion.div>
-        )}
-
-        {/* Success Message */}
-        {uploadStatus === "success" && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="mt-6 bg-green-50 border border-green-200 rounded-lg p-5"
-          >
-            <div className="flex items-center gap-3 mb-2">
-              <CheckCircle2 size={22} className="text-green-600" />
-              <p className="text-green-900 font-semibold text-base">
-                Upload Successful!
-              </p>
-            </div>
-            <p className="text-green-700 text-sm">
-              Your medical report has been processed. {uploadResult?.total_chunks_created} sections were analyzed and indexed.
-            </p>
-          </motion.div>
-        )}
-
-        {/* Upload Button */}
-        {file && uploadStatus !== "success" && (
-          <motion.button
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            onClick={handleUpload}
-            disabled={isUploading}
-            className={`w-full mt-6 py-3.5 px-4 rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2 shadow-lg ${
-              isUploading
-                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                : "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-xl shadow-blue-600/30"
-            }`}
-          >
-            {isUploading ? (
-              <>
-                <Loader2 size={18} className="animate-spin" />
-                Processing your report...
-              </>
-            ) : (
-              <>
-                <Upload size={18} />
-                Upload & Analyze Report
-              </>
-            )}
-          </motion.button>
-        )}
-
-        {/* Chat CTA after success */}
-        {uploadStatus === "success" && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="mt-6 space-y-3"
-          >
-            <button
-              onClick={() => navigate("/chat")}
-              className="w-full py-3.5 px-4 rounded-lg font-semibold text-sm bg-blue-600 text-white hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 shadow-lg shadow-blue-600/30"
-            >
-              <MessageCircle size={18} />
-              Ask AI About Your Report
-            </button>
-            <button
-              onClick={handleRemoveFile}
-              className="w-full py-3 px-4 rounded-lg font-medium text-sm bg-white/60 backdrop-blur-md border-2 border-gray-300 text-gray-700 hover:bg-white transition-colors"
-            >
-              Upload Another Report
-            </button>
-          </motion.div>
-        )}
-
-        {/* Guidelines */}
-        <div className="mt-8 bg-white/60 backdrop-blur-xl border border-white/60 rounded-xl p-6 shadow-lg">
-          <p className="text-gray-900 font-semibold text-base mb-4">
-            Supported Report Types
+          <p className="text-blue-600 mb-10 text-sm md:text-base leading-relaxed">
+            Upload your medical reports and our AI will analyze them to provide personalized health insights through the chatbot.
           </p>
-          <ul className="space-y-2.5">
-            {[
-              "Blood test results (CBC, metabolic panels)",
-              "Imaging reports (X-rays, MRI, CT scans)",
-              "Lab reports and diagnostic tests",
-              "Prescription and medication records",
-              "Discharge summaries",
-            ].map((item, index) => (
-              <li key={index} className="flex items-center gap-3 text-gray-600 text-sm">
-                <CheckCircle2 size={16} className="text-green-600 flex-shrink-0" />
-                {item}
-              </li>
-            ))}
-          </ul>
-        </div>
+
+          <div className="space-y-4">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+              className="relative group"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-cyan-400/20 rounded-xl blur-xl group-hover:blur-2xl transition-all"></div>
+              <div className="relative bg-white/60 backdrop-blur-md rounded-xl p-5 border border-white/60 shadow-lg hover:shadow-xl transition-all">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center flex-shrink-0">
+                    <span className="text-white text-sm font-bold">1</span>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-blue-900 text-sm mb-2">How to upload</h3>
+                    <ul className="text-gray-700 text-sm space-y-1.5">
+                      <li className="flex items-start gap-2">
+                        <span className="text-blue-600 mt-0.5">•</span>
+                        <span>Drag & drop or click to select your PDF file</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-blue-600 mt-0.5">•</span>
+                        <span>Click &quot;Upload & Analyze Report&quot;</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-blue-600 mt-0.5">•</span>
+                        <span>Ask AI about your results in the chatbot</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.5 }}
+              className="relative group"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-cyan-400/20 to-blue-400/20 rounded-xl blur-xl group-hover:blur-2xl transition-all"></div>
+              <div className="relative bg-white/60 backdrop-blur-md rounded-xl p-5 border border-white/60 shadow-lg hover:shadow-xl transition-all">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-cyan-600 flex items-center justify-center flex-shrink-0">
+                    <FileSearch size={16} className="text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-blue-900 text-sm mb-2">Supported reports</h3>
+                    <ul className="text-gray-700 text-sm space-y-1.5">
+                      <li className="flex items-start gap-2">
+                        <span className="text-cyan-600 mt-0.5">•</span>
+                        <span>Blood tests & lab results</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-cyan-600 mt-0.5">•</span>
+                        <span>Imaging reports (X-ray, MRI, CT)</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-cyan-600 mt-0.5">•</span>
+                        <span>Prescriptions & discharge summaries</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4, duration: 0.5 }}
+              className="bg-gradient-to-r from-emerald-50/80 to-teal-50/80 backdrop-blur-md border border-emerald-200/50 p-4 rounded-xl text-sm text-emerald-900 shadow-lg flex items-start gap-3"
+            >
+              <Shield size={20} className="text-emerald-600 flex-shrink-0 mt-0.5" />
+              <span>Your reports are securely processed and encrypted. PDF format only, max 10MB.</span>
+            </motion.div>
+          </div>
+        </motion.div>
+
+        {/* RIGHT PANEL - Upload Area */}
+        <motion.div
+          initial={{ opacity: 0, x: 30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6 }}
+          className="p-8 md:p-12 flex flex-col justify-center bg-gradient-to-bl from-white/20 via-blue-50/20 to-cyan-50/20 backdrop-blur-md"
+        >
+          <div className="max-w-xl mx-auto w-full">
+            {/* Upload Drop Zone */}
+            <motion.div
+              whileHover={{ scale: file ? 1 : 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => !file && fileInputRef.current?.click()}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={`group relative flex flex-col items-center justify-center w-full h-96 border-2 border-dashed rounded-3xl transition-all duration-300 overflow-hidden ${
+                isDragging
+                  ? "border-blue-500 bg-blue-50/50 backdrop-blur-xl shadow-2xl shadow-blue-500/20 scale-[1.02]"
+                  : file
+                  ? "border-blue-300 bg-white/80 backdrop-blur-xl shadow-2xl cursor-default"
+                  : "border-gray-300 hover:border-blue-500 bg-white/60 backdrop-blur-xl shadow-xl hover:shadow-2xl cursor-pointer"
+              }`}
+            >
+              {!file && !isDragging && (
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-400/0 via-cyan-400/0 to-blue-400/0 group-hover:from-blue-400/5 group-hover:via-cyan-400/5 group-hover:to-blue-400/5 transition-all duration-500"></div>
+              )}
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf,application/pdf"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+
+              <AnimatePresence mode="wait">
+                {!file ? (
+                  <motion.div
+                    key="upload-prompt"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    className="relative text-center z-10"
+                  >
+                    <motion.div
+                      animate={{ y: [0, -10, 0] }}
+                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                      className="w-20 h-20 mx-auto mb-5 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-xl shadow-blue-500/30"
+                    >
+                      <Upload size={36} className="text-white" />
+                    </motion.div>
+                    <p className="font-bold text-gray-900 text-lg mb-2">
+                      Drop your PDF file here
+                    </p>
+                    <p className="text-sm text-blue-600 font-medium">
+                      or click to browse from your device
+                    </p>
+                    <div className="mt-6 flex items-center justify-center gap-2 text-xs text-gray-500">
+                      <FileText size={14} />
+                      <span>PDF format • Max 10MB</span>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="file-preview"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    className="relative flex flex-col items-center text-center z-10 px-6"
+                  >
+                    <div className="w-20 h-20 rounded-2xl bg-red-50 flex items-center justify-center mb-5 border border-red-100 shadow-lg">
+                      <FileText size={36} className="text-red-500" />
+                    </div>
+                    <p className="text-gray-900 font-bold text-base truncate max-w-full">
+                      {file.name}
+                    </p>
+                    <p className="text-gray-500 text-sm mt-1">
+                      {formatFileSize(file.size)}
+                    </p>
+                    {!isUploading && uploadStatus !== "success" && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemoveFile();
+                        }}
+                        className="absolute top-4 right-4 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg transition-colors"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            {/* Error Message */}
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="mt-4 bg-red-50/80 backdrop-blur-md border border-red-200/50 rounded-xl p-4 flex items-center gap-3 shadow-lg"
+                >
+                  <AlertCircle size={20} className="text-red-600 flex-shrink-0" />
+                  <p className="text-red-700 text-sm font-medium">{error}</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Success Message */}
+            <AnimatePresence>
+              {uploadStatus === "success" && (
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -30 }}
+                  transition={{ duration: 0.5 }}
+                  className="mt-6 bg-white/70 backdrop-blur-xl border border-white/60 rounded-2xl p-6 shadow-2xl"
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <CheckCircle2 size={24} className="text-green-600" />
+                    <h3 className="text-lg font-bold text-blue-900">Upload Successful!</h3>
+                  </div>
+                  <p className="text-gray-700 text-sm leading-relaxed">
+                    Your medical report has been processed. {uploadResult?.total_chunks_created} sections were analyzed and indexed.
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Upload Button */}
+            {file && uploadStatus !== "success" && (
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleUpload}
+                disabled={isUploading}
+                className={`mt-6 w-full py-4 rounded-xl font-bold text-white transition-all shadow-xl relative overflow-hidden ${
+                  isUploading
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 shadow-blue-600/40"
+                }`}
+              >
+                {isUploading && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-cyan-500 to-blue-600 animate-shimmer"></div>
+                )}
+                <span className="relative z-10 flex items-center justify-center gap-2">
+                  {isUploading ? (
+                    <>
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
+                      />
+                      Processing your report...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles size={20} />
+                      Upload & Analyze Report
+                    </>
+                  )}
+                </span>
+              </motion.button>
+            )}
+
+            {/* Chat CTA after success */}
+            {uploadStatus === "success" && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="mt-6 space-y-3"
+              >
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => navigate("/chat")}
+                  className="w-full py-4 px-4 rounded-xl font-bold text-sm bg-gradient-to-r from-blue-600 to-cyan-500 text-white hover:from-blue-700 hover:to-cyan-600 transition-all flex items-center justify-center gap-2 shadow-xl shadow-blue-600/30"
+                >
+                  <MessageCircle size={18} />
+                  Ask AI About Your Report
+                </motion.button>
+                <button
+                  onClick={handleRemoveFile}
+                  className="w-full py-3 px-4 rounded-xl font-medium text-sm bg-white/60 backdrop-blur-md border-2 border-gray-300 text-gray-700 hover:bg-white transition-colors"
+                >
+                  Upload Another Report
+                </button>
+              </motion.div>
+            )}
+          </div>
+        </motion.div>
       </div>
     </div>
   );
