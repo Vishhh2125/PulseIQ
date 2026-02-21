@@ -4,7 +4,7 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { authAPI } from "../utils/api.js";
 
 const initialState = {
-  user: null,
+  user: JSON.parse(localStorage.getItem('user')) || null, // read from localStorage
   error: null,
   isLoading: false,
 };
@@ -110,6 +110,7 @@ const authSlice = createSlice({
       .addCase(registerUser.fulfilled, (state, action) => {
         state.isLoading = false;
         state.user = action.payload.user;
+        localStorage.setItem('user', JSON.stringify(action.payload.user)); // save user
         state.error = null;
       })
       .addCase(registerUser.rejected, (state, action) => {
@@ -127,6 +128,7 @@ const authSlice = createSlice({
       .addCase(registerDoctor.fulfilled, (state, action) => {
         state.isLoading = false;
         state.user = action.payload.user;
+        localStorage.setItem('user', JSON.stringify(action.payload.user)); // save user
         state.error = null;
       })
       .addCase(registerDoctor.rejected, (state, action) => {
@@ -144,6 +146,7 @@ const authSlice = createSlice({
       .addCase(login.fulfilled, (state, action) => {
         state.isLoading = false;
         state.user = action.payload.user;
+        localStorage.setItem('user', JSON.stringify(action.payload.user)); // save user
         state.error = null;
       })
       .addCase(login.rejected, (state, action) => {
@@ -160,13 +163,14 @@ const authSlice = createSlice({
       .addCase(logout.fulfilled, (state) => {
         state.isLoading = false;
         state.user = null;
+        localStorage.removeItem('user'); // clear user
         state.error = null;
       })
       .addCase(logout.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
-        // Still clear user on logout error
         state.user = null;
+        localStorage.removeItem('user'); // clear user even on error
       });
 
     // Get Current User
@@ -177,16 +181,18 @@ const authSlice = createSlice({
       .addCase(getCurrentUser.fulfilled, (state, action) => {
         state.isLoading = false;
         state.user = action.payload.user;
+        localStorage.setItem('user', JSON.stringify(action.payload.user)); // update user
         state.error = null;
       })
       .addCase(getCurrentUser.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
         state.user = null;
-        localStorage.removeItem('accessToken');
+        localStorage.removeItem('user'); // clear on 401
       });
+
   },
 });
 
 export const { clearError, setError, initializeAuth } = authSlice.actions;
-export default authSlice.reducer; 
+export default authSlice.reducer;

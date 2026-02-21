@@ -11,53 +11,23 @@ import FitnessDashboard from './Components/FitnessDashboard.jsx';
 import ChatBot from './Components/ChatBot.jsx';
 import UserReportUpload from './Components/UserReportUpload.jsx';
 import Assessment from './Components/Assessment.jsx';
+import Appointmentbooking from './Components/Appointmentbooking.jsx';
+import SmartCarePlanGenerator from './Components/SmartCarePlanGenerator.jsx';
 import SkinDetection from './Components/SkinDetection.jsx';
 import NutritionPlanner from './Components/NutritionPlanner.jsx';
+
 import DailyCheckIn from './Components/DailyCheckIn.jsx';
 import MedicationAdherenceAssistant from './Components/MedicationAdherenceAssistant.jsx';
+import DigitalTwinDashboard from './Components/DigitalTwinDashboard.jsx';
 import { getCurrentUser } from './store/authSlice.js';
 
-// Generic auth guard (any logged-in user)
+// Generic auth guard — redirects to login if not logged in
 function ProtectedRoute({ children }) {
   const { user } = useSelector((state) => state.auth);
-  const token = localStorage.getItem('accessToken');
+  const savedUser = localStorage.getItem('user');
 
-  if (!user && !token) {
+  if (!user && !savedUser) {
     return <Navigate to="/auth?mode=login" replace />;
-  }
-
-  return children;
-}
-
-// Patient-only route
-function PatientRoute({ children }) {
-  const { user } = useSelector((state) => state.auth);
-  const token = localStorage.getItem('accessToken');
-
-  if (!user && !token) {
-    return <Navigate to="/auth?mode=login" replace />;
-  }
-
-  // If we know the role and it's not patient, send doctors to their home
-  if (user && user.usertype && user.usertype !== 'patient') {
-    return <Navigate to="/doctor/appointments" replace />;
-  }
-
-  return children;
-}
-
-// Doctor-only route
-function DoctorRoute({ children }) {
-  const { user } = useSelector((state) => state.auth);
-  const token = localStorage.getItem('accessToken');
-
-  if (!user && !token) {
-    return <Navigate to="/auth?mode=login" replace />;
-  }
-
-  // If we know the role and it's not doctor, send patients to their home
-  if (user && user.usertype && user.usertype !== 'doctor') {
-    return <Navigate to="/main" replace />;
   }
 
   return children;
@@ -66,11 +36,9 @@ function DoctorRoute({ children }) {
 function App() {
   const dispatch = useDispatch();
 
-  // Initialize auth on app load - restore user data if token exists
   useEffect(() => {
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      // Attempt to restore user data from backend
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
       dispatch(getCurrentUser());
     }
   }, [dispatch]);
@@ -80,63 +48,30 @@ function App() {
       <Route path="/" element={<HomePage />} />
       <Route path="/auth" element={<AuthPage />} />
 
+      <Route path="/main" element={<ProtectedRoute><MainPage /></ProtectedRoute>} />
+      <Route path="/fitness-dashboard" element={<ProtectedRoute><FitnessDashboard /></ProtectedRoute>} />
+      <Route path="/assessment" element={<ProtectedRoute><Assessment /></ProtectedRoute>} />
+      <Route path="/skin-detection" element={<ProtectedRoute><SkinDetection /></ProtectedRoute>} />
+      <Route path="/nutrition-planner" element={<ProtectedRoute><NutritionPlanner /></ProtectedRoute>} />
+      <Route path="/chat" element={<ProtectedRoute><ChatBot /></ProtectedRoute>} />
+      <Route path="/upload-report" element={<ProtectedRoute><UserReportUpload /></ProtectedRoute>} />
+      <Route path="/appointments" element={<ProtectedRoute><Appointmentbooking /></ProtectedRoute>} />
+      <Route path="/care-plan" element={<ProtectedRoute><SmartCarePlanGenerator /></ProtectedRoute>} />
+      <Route path="/doctor/appointments" element={<ProtectedRoute><DoctorAppointment /></ProtectedRoute>} />
       {/* Patient area */}
-      <Route
-        path="/main"
-        element={
-          <PatientRoute>
-            <MainPage />
-          </PatientRoute>
-        }
-      />
+     
 
-      {/* Fitness Dashboard */}
-      <Route
-        path="/fitness-dashboard"
-        element={
-          <PatientRoute>
-            <FitnessDashboard />
-          </PatientRoute>
-        }
-      />
+      
+      
 
-      {/* Assessment - CBT, DBT, PHQ-9 */}
-      <Route
-        path="/assessment"
-        element={
-          <PatientRoute>
-            <Assessment />
-          </PatientRoute>
-        }
-      />
-
-      {/* Skin Detection */}
-      <Route
-        path="/skin-detection"
-        element={
-          <PatientRoute>
-            <SkinDetection />
-          </PatientRoute>
-        }
-      />
-
-      {/* Nutrition Planner */}
-      <Route
-        path="/nutrition-planner"
-        element={
-          <PatientRoute>
-            <NutritionPlanner />
-          </PatientRoute>
-        }
-      />
 
       {/* Daily Check-In */}
       <Route
         path="/daily-checkin"
         element={
-          <PatientRoute>
+          <ProtectedRoute>
             <DailyCheckIn />
-          </PatientRoute>
+          </ProtectedRoute>
         }
       />
 
@@ -144,41 +79,23 @@ function App() {
       <Route
         path="/medication-adherence"
         element={
-          <PatientRoute>
+          <ProtectedRoute>
             <MedicationAdherenceAssistant />
-          </PatientRoute>
+          </ProtectedRoute> 
         }
       />
 
       {/* Chat Bot */}
       <Route
-        path="/chat"
+        path="/digital-twin"
         element={
-          <ProtectedRoute>
-            <ChatBot />
+          <ProtectedRoute>  
+            <DigitalTwinDashboard />
           </ProtectedRoute>
         }
       />
 
-      {/* Upload Medical Report */}
-      <Route
-        path="/upload-report"
-        element={
-          <ProtectedRoute>
-            <UserReportUpload />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Doctor area */}
-      <Route
-        path="/doctor/appointments"
-        element={
-          <DoctorRoute>
-            <DoctorAppointment />
-          </DoctorRoute>
-        }
-      />
+   
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
