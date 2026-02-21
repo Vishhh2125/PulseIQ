@@ -47,17 +47,6 @@ export default function AuthPage() {
     }
   }, [searchParams]);
 
-  // If user is already authenticated, redirect based on role
-  useEffect(() => {
-    if (!user || !user.usertype) return;
-
-    if (user.usertype === 'doctor') {
-      navigate('/doctor/appointments', { replace: true });
-    } else {
-      navigate('/main', { replace: true });
-    }
-  }, [user, navigate]);
-
   // Clear errors when switching between login/register or user types
   useEffect(() => {
     clearFormErrors();
@@ -256,11 +245,6 @@ export default function AuthPage() {
       dispatch(setError(error.message || 'An unexpected error occurred'));
     }
   };
-
-  // If user is already authenticated, don't render the form
-  if (user) {
-    return null;
-  }
 
   return (
     <div className="min-h-screen bg-gray-100">
