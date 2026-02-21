@@ -60,5 +60,17 @@ class UserChunk(Base):
     document = relationship("UserDocument", back_populates="chunks")
 
 
+# 🔹 USER CHAT TABLE (Digital Twin - stores all user conversations)
+class UserChat(Base):
+    __tablename__ = "user_chats"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(String, index=True, nullable=False)
+    question = Column(Text, nullable=False)
+    response = Column(Text, nullable=False)
+    personalized_mode = Column(String, default="false")  # Was personalized or general
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 # ✅ Create all tables
 Base.metadata.create_all(bind=engine)

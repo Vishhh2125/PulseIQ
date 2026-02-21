@@ -169,6 +169,71 @@ export const mlAPI = {
       throw error;
     }
   },
+
+  // Save chat for digital twin analysis
+  saveChat: async (userId, question, response, personalizedMode = false) => {
+    const url = `${ML_API_BASE_URL}/save-chat/`;
+    
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: String(userId),
+          question: question,
+          response: response,
+          personalized_mode: personalizedMode,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to save chat: ${res.status}`);
+      }
+
+      return await res.json();
+    } catch (error) {
+      console.error('Save chat error:', error);
+      throw error;
+    }
+  },
+
+  // Get digital twin analysis
+  getDigitalTwin: async (userId) => {
+    const url = `${ML_API_BASE_URL}/digital-twin/${userId}`;
+    
+    try {
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error(`Failed to get digital twin: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Digital twin error:', error);
+      throw error;
+    }
+  },
+
+  // Get chat history
+  getChatHistory: async (userId, limit = 50) => {
+    const url = `${ML_API_BASE_URL}/chat-history/${userId}?limit=${limit}`;
+    
+    try {
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error(`Failed to get chat history: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Chat history error:', error);
+      throw error;
+    }
+  },
 };
 
 export default apiRequest;

@@ -6,7 +6,7 @@ import shutil
 import os
 from typing import Optional
 from pydantic import BaseModel
-from database import SessionLocal, UserDocument, UserChunk, GlobalDocument, GlobalChunk
+from database import SessionLocal, UserDocument, UserChunk, GlobalDocument, GlobalChunk, UserChat
 from utils.global_vector_store import append_to_global_index
 from utils.vector_store import retrieve_user_chunks, create_vector_store
 from utils.global_vector_store import retrieve_global_chunks
@@ -14,6 +14,7 @@ from utils.pdf_extractor import extract_text_from_pdf
 from utils.chunker import chunk_text
 from utils.prompt_builder import build_medical_prompt
 from utils.llm_service import generate_response
+from utils.digital_twin import analyze_digital_twin
 
 
 app = FastAPI()
@@ -40,6 +41,13 @@ class ChatRequest(BaseModel):
     user_id: str
     question: str
     watch_data: Optional[dict] = None  # Real-time watch/fitness data
+
+
+class SaveChatRequest(BaseModel):
+    user_id: str
+    question: str
+    response: str
+    personalized_mode: bool = False
 
 
 # ✅ Health Check Endpoint
@@ -191,3 +199,122 @@ async def upload_global_medical_doc(
         "disease_name": disease_name,
         "chunks_added": total_chunks
     }
+
+
+# 🔹 DIGITAL TWIN ENDPOINTS
+# ✅ Save Chat to Database (Digital Twin)
+@app.post("/save-chat/")
+async def save_chat(request: SaveChatRequest):
+    """Save user's chat conversation for digital twin analysis"""
+    
+    db = SessionLocal()
+    
+    try:
+        new_chat = UserChat(
+            user_id=request.user_id,
+            question=request.question,
+            response=request.response,
+            personalized_mode=str(request.personalized_mode)
+        )
+        
+        db.add(new_chat)
+        db.commit()
+        db.refresh(new_chat)
+        
+        return {
+            "message": "Chat saved successfully",
+            "chat_id": new_chat.id,
+            "user_id": request.user_id
+        }
+    except Exception as e:
+        db.rollback()
+        return {"error": f"Failed to save chat: {str(e)}"}
+    finally:
+        db.close()
+
+
+# ✅ Get Digital Twin Analysis (Analyzes all user chats for health risks)
+@app.get("/digital-twin/{user_id}")
+async def get_digital_twin(user_id: str):
+    """Get digital twin analysis for a user based on their chat history"""
+    
+    db = SessionLocal()
+    
+    try:
+        # Get all user's chats
+        user_chats = db.query(UserChat).filter(UserChat.user_id == user_id).order_by(UserChat.created_at).all()
+        
+        if not user_chats:
+            return {
+                "user_id": user_id,
+                "risk_level": "None",
+                "summary": "No chat history found",
+                "show_alert": False,
+                "total_chats": 0
+            }
+        
+        # Convert to dict format for analysis
+        chat_history = [
+            {
+                "question": chat.question,
+                "response": chat.response,
+                "personalized_mode": chat.personalized_mode,
+                "created_at": chat.created_at.isoformat()
+            }
+            for chat in user_chats
+        ]
+        
+        # Analyze digital twin
+        analysis = analyze_digital_twin(chat_history)
+        
+        return {
+            "user_id": user_id,
+            "risk_level": analysis.get("risk_level", "None"),
+            "summary": analysis.get("summary", "No serious health concerns detected"),
+            "show_alert": analysis.get("show_alert", False),
+            "total_chats": len(user_chats),
+            "last_chat": user_chats[-1].created_at.isoformat() if user_chats else None
+        }
+    
+    except Exception as e:
+        return {
+            "error": f"Failed to get digital twin: {str(e)}",
+            "user_id": user_id
+        }
+    finally:
+        db.close()
+
+
+# ✅ Get User's Chat History
+@app.get("/chat-history/{user_id}")
+async def get_chat_history(user_id: str, limit: int = 50):
+    """Get user's chat history for the dashboard"""
+    
+    db = SessionLocal()
+    
+    try:
+        user_chats = db.query(UserChat).filter(
+            UserChat.user_id == user_id
+        ).order_by(UserChat.created_at.desc()).limit(limit).all()
+        
+        chats = [
+            {
+                "id": chat.id,
+                "question": chat.question,
+                "response": chat.response,
+                "personalized_mode": chat.personalized_mode,
+                "created_at": chat.created_at.isoformat()
+            }
+            for chat in user_chats
+        ]
+        
+        return {
+            "user_id": user_id,
+            "total_chats": len(chats),
+            "chats": chats
+        }
+    
+    except Exception as e:
+        return {"error": f"Failed to get chat history: {str(e)}"}
+    finally:
+        db.close()

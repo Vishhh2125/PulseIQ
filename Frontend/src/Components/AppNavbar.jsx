@@ -5,7 +5,7 @@ export default function AppNavbar() {
   const navigate = useNavigate();
 
   return (
-    <header className="bg-white border-b border-slate-100 shadow-sm sticky top-0 z-20">
+    <header className="bg-white border-b border-blue-100/80 shadow-sm sticky top-0 z-20">
       <div className="max-w-6xl mx-auto px-6 py-3.5 flex items-center gap-4">
         <button
           type="button"

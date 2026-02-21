@@ -4,7 +4,7 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { authAPI } from "../utils/api.js";
 
 const initialState = {
-  user: null,
+  user: JSON.parse(localStorage.getItem('user')) || null, // read from localStorage
   error: null,
   isLoading: false,
 };
@@ -108,6 +108,7 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(registerUser.fulfilled, (state, action) => {
+<<<<<<< HEAD
   state.isLoading = false;
   state.user = action.payload.user;
   state.error = null;
@@ -116,6 +117,13 @@ const authSlice = createSlice({
     localStorage.setItem("accessToken", action.payload.accessToken);
   }
 })
+=======
+        state.isLoading = false;
+        state.user = action.payload.user;
+        localStorage.setItem('user', JSON.stringify(action.payload.user)); // save user
+        state.error = null;
+      })
+>>>>>>> d3fcc7b9035696fc42f3d13d8f73e4d9bb1db877
       .addCase(registerUser.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
@@ -131,6 +139,7 @@ const authSlice = createSlice({
       .addCase(registerDoctor.fulfilled, (state, action) => {
         state.isLoading = false;
         state.user = action.payload.user;
+        localStorage.setItem('user', JSON.stringify(action.payload.user)); // save user
         state.error = null;
         if (action.payload.accessToken) {
     localStorage.setItem("accessToken", action.payload.accessToken);
@@ -149,6 +158,7 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(login.fulfilled, (state, action) => {
+<<<<<<< HEAD
   state.isLoading = false;
   state.user = action.payload.user;
   state.error = null;
@@ -158,6 +168,13 @@ const authSlice = createSlice({
     localStorage.setItem("accessToken", action.payload.accessToken);
   }
 })
+=======
+        state.isLoading = false;
+        state.user = action.payload.user;
+        localStorage.setItem('user', JSON.stringify(action.payload.user)); // save user
+        state.error = null;
+      })
+>>>>>>> d3fcc7b9035696fc42f3d13d8f73e4d9bb1db877
       .addCase(login.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
@@ -172,14 +189,15 @@ const authSlice = createSlice({
       .addCase(logout.fulfilled, (state) => {
         state.isLoading = false;
         state.user = null;
+        localStorage.removeItem('user'); // clear user
         state.error = null;
         localStorage.removeItem("accessToken");
       })
       .addCase(logout.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
-        // Still clear user on logout error
         state.user = null;
+        localStorage.removeItem('user'); // clear user even on error
       });
 
     // Get Current User
@@ -190,16 +208,18 @@ const authSlice = createSlice({
       .addCase(getCurrentUser.fulfilled, (state, action) => {
         state.isLoading = false;
         state.user = action.payload.user;
+        localStorage.setItem('user', JSON.stringify(action.payload.user)); // update user
         state.error = null;
       })
       .addCase(getCurrentUser.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
         state.user = null;
-        localStorage.removeItem('accessToken');
+        localStorage.removeItem('user'); // clear on 401
       });
+
   },
 });
 
 export const { clearError, setError, initializeAuth } = authSlice.actions;
-export default authSlice.reducer; 
+export default authSlice.reducer;
