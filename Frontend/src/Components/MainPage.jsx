@@ -1,6 +1,4 @@
 import {
-  Stethoscope,
-  Baby,
   FileUp,
   ShieldAlert,
   CalendarCheck,
@@ -9,9 +7,7 @@ import {
   ClipboardList,
   HeartHandshake,
   Info,
-  ArrowRight,
   Sparkles,
-  Bell,
   ChevronRight,
   ClipboardListIcon,
   Activity,
@@ -20,6 +16,7 @@ import {
   ScanFace,
   Apple,
 } from "lucide-react";
+import AppNavbar from "./AppNavbar";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
@@ -27,15 +24,26 @@ import { useNavigate } from "react-router-dom";
 
 const ACTION_CARDS = [
   {
-    id: "symptoms",
-    icon: Stethoscope,
-    label: "Analyze Symptoms",
-    desc: "Describe what you're feeling and get an instant AI-powered health assessment.",
+    id: "dailyCheckIn",
+    icon: CalendarCheck,
+    label: "Daily Check-In",
+    desc: "Track your mood, sleep, energy, and get personalized wellness insights.",
     iconBg: "bg-blue-100",
     iconColor: "text-blue-600",
     border: "border-blue-100",
-    tag: "Most used",
+    tag: "New",
     tagColor: "bg-blue-50 text-blue-600",
+  },
+  {
+    id: "medicationAssistant",
+    icon: ClipboardListIcon,
+    label: "Medication Adherence Assistant",
+    desc: "Track medications, set reminders, and get AI insights on adherence.",
+    iconBg: "bg-sky-100",
+    iconColor: "text-sky-600",
+    border: "border-sky-100",
+    tag: null,
+    tagColor: "",
   },
   {
     id: "chat",
@@ -47,17 +55,6 @@ const ACTION_CARDS = [
     border: "border-cyan-100",
     tag: "New",
     tagColor: "bg-cyan-50 text-cyan-600",
-  },
-  {
-    id: "pregnancy",
-    icon: Baby,
-    label: "Pregnancy Health Monitor",
-    desc: "Track your pregnancy milestones and receive personalized guidance at every stage.",
-    iconBg: "bg-rose-100",
-    iconColor: "text-rose-500",
-    border: "border-rose-100",
-    tag: null,
-    tagColor: "",
   },
   {
     id: "upload",
@@ -89,17 +86,6 @@ const ACTION_CARDS = [
     iconBg: "bg-emerald-100",
     iconColor: "text-emerald-600",
     border: "border-emerald-100",
-    tag: null,
-    tagColor: "",
-  },
-  {
-    id: "medication",
-    icon: ClipboardListIcon,
-    label: "Medication Adherence Tracker",
-    desc: "Tracks medication usage patterns to monitor and improve treatment consistency.",
-    iconBg: "bg-yellow-100",
-    iconColor: "text-yellow-600",
-    border: "border-yellow-100",
     tag: null,
     tagColor: "",
   },
@@ -187,7 +173,7 @@ function ActionCard({ card, onNavigate }) {
   return (
     <button
       onClick={() => onNavigate?.(card.id)}
-      className="group relative bg-white rounded-2xl border border-slate-100 shadow-sm p-5 text-left flex flex-col gap-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-200"
+      className="group relative bg-white rounded-2xl border border-blue-100/60 shadow-sm p-5 text-left flex flex-col gap-4 hover:shadow-lg hover:shadow-blue-100/50 hover:-translate-y-0.5 hover:border-blue-200 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-300"
     >
       {card.tag && (
         <span className={`absolute top-4 right-4 text-[10px] font-bold px-2 py-0.5 rounded-full ${card.tagColor}`}>
@@ -204,7 +190,7 @@ function ActionCard({ card, onNavigate }) {
         <p className="text-slate-500 text-xs leading-relaxed">{card.desc}</p>
       </div>
 
-      <div className="flex items-center gap-1 text-blue-500 text-xs font-semibold">
+      <div className="flex items-center gap-1 text-blue-600 text-xs font-semibold">
         Get started
         <ChevronRight size={13} className="transition-transform duration-200 group-hover:translate-x-0.5" />
       </div>
@@ -215,7 +201,7 @@ function ActionCard({ card, onNavigate }) {
 function CapabilityCard({ cap }) {
   const Icon = cap.icon;
   return (
-    <div className="flex gap-4 bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+    <div className="flex gap-4 bg-white rounded-2xl border border-blue-100/60 shadow-sm p-5 hover:border-blue-200/80 transition-colors">
       <div className={`w-10 h-10 rounded-xl ${cap.iconBg} flex items-center justify-center flex-shrink-0`}>
         <Icon size={18} className={cap.iconColor} />
       </div>
@@ -249,6 +235,8 @@ export default function MainPage({
     }
 
     const routes = {
+      dailyCheckIn: "/daily-checkin",
+      medicationAssistant: "/medication-adherence",
       chat: "/chat",
       upload: "/upload-report",
       appointment: "/appointment",
@@ -266,35 +254,8 @@ export default function MainPage({
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans">
-
-      {/* ── Top Navigation Bar ── */}
-      <header className="bg-white border-b border-slate-100 shadow-sm sticky top-0 z-20">
-        <div className="max-w-6xl mx-auto px-6 py-3.5 flex items-center justify-between">
-          {/* Logo */}
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-sm">
-              <Sparkles size={13} className="text-white" />
-            </div>
-            <span className="text-slate-800 font-bold text-sm tracking-tight">PreventAI Health</span>
-          </div>
-
-          {/* Right actions */}
-          <div className="flex items-center gap-3">
-            <button className="relative text-slate-400 hover:text-blue-600 p-2 rounded-xl hover:bg-blue-50 transition-colors">
-              <Bell size={18} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-400 rounded-full border-2 border-white" />
-            </button>
-            <div className="h-5 w-px bg-slate-200" />
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-white text-xs font-bold">
-                {patientName[0]}
-              </div>
-              <span className="text-slate-700 text-sm font-medium hidden sm:block">{patientName}</span>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen main-page-theme font-sans">
+      <AppNavbar />
 
       {/* ── 1. Welcome Hero — Full Width ── */}
       <motion.section
@@ -311,8 +272,8 @@ export default function MainPage({
           className="absolute inset-0 w-full h-full object-cover object-center"
         />
 
-        {/* Blue gradient overlay — keeps text readable */}
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-700/92 via-blue-600/85 to-cyan-600/80" />
+        {/* White & blue gradient overlay — keeps text readable */}
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/95 via-blue-500/90 to-sky-500/85" />
 
         {/* Subtle ECG line at bottom */}
         <div className="absolute bottom-0 left-0 right-0 h-16 opacity-10 pointer-events-none">
@@ -399,7 +360,7 @@ export default function MainPage({
         </div>
       </motion.section>
 
-      <main className="max-w-6xl mx-auto px-6 py-10 space-y-12">
+      <main className="max-w-6xl mx-auto px-6 py-10 space-y-12 main-content">
 
         {/* ── 2. Main Action Cards ── */}
         <section>
@@ -434,7 +395,7 @@ export default function MainPage({
 
         {/* ── 4. Info / Alert Section ── */}
         <section>
-          <div className="flex gap-4 bg-blue-50 border border-blue-100 rounded-2xl p-5">
+          <div className="flex gap-4 bg-blue-50/80 border border-blue-200/60 rounded-2xl p-5">
             <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center">
               <Info size={17} className="text-blue-600" />
             </div>
@@ -450,31 +411,10 @@ export default function MainPage({
           </div>
         </section>
 
-        {/* ── 5. Call To Action ── */}
-        <section className="bg-white border border-slate-100 rounded-3xl shadow-sm p-8 md:p-10 text-center">
-          <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-4">
-            <Stethoscope size={22} className="text-blue-600" />
-          </div>
-          <h2 className="text-slate-900 font-extrabold text-2xl mb-2">
-            Not feeling well?
-          </h2>
-          <p className="text-slate-500 text-sm max-w-sm mx-auto leading-relaxed mb-6">
-            Describe your symptoms and our AI will assess your health risk in under 60 seconds — completely private and secure.
-          </p>
-          <button
-            onClick={onStartAnalysis}
-            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold px-7 py-3.5 rounded-xl shadow-md shadow-blue-200 hover:shadow-lg hover:shadow-blue-200 hover:-translate-y-0.5 transition-all duration-200 text-sm"
-          >
-            Start Symptom Analysis
-            <ArrowRight size={15} />
-          </button>
-          <p className="text-slate-400 text-xs mt-4">Free · Private · No account required for trial</p>
-        </section>
-
       </main>
 
       {/* ── Footer ── */}
-      <footer className="border-t border-slate-100 bg-white mt-12">
+      <footer className="border-t border-blue-100/80 bg-white mt-12">
         <div className="max-w-6xl mx-auto px-6 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <div className="w-5 h-5 rounded-md bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center">

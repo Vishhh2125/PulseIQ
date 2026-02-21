@@ -13,6 +13,8 @@ import UserReportUpload from './Components/UserReportUpload.jsx';
 import Assessment from './Components/Assessment.jsx';
 import SkinDetection from './Components/SkinDetection.jsx';
 import NutritionPlanner from './Components/NutritionPlanner.jsx';
+import DailyCheckIn from './Components/DailyCheckIn.jsx';
+import MedicationAdherenceAssistant from './Components/MedicationAdherenceAssistant.jsx';
 import { getCurrentUser } from './store/authSlice.js';
 
 // Generic auth guard (any logged-in user)
@@ -124,6 +126,26 @@ function App() {
         element={
           <PatientRoute>
             <NutritionPlanner />
+          </PatientRoute>
+        }
+      />
+
+      {/* Daily Check-In */}
+      <Route
+        path="/daily-checkin"
+        element={
+          <PatientRoute>
+            <DailyCheckIn />
+          </PatientRoute>
+        }
+      />
+
+      {/* Medication Adherence Assistant */}
+      <Route
+        path="/medication-adherence"
+        element={
+          <PatientRoute>
+            <MedicationAdherenceAssistant />
           </PatientRoute>
         }
       />
