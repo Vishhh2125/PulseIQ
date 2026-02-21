@@ -173,24 +173,35 @@ export default function DoctorAppointment({ onBack }) {
   return (
     <div className="min-h-screen bg-slate-50 font-sans">
       {/* ── Header ── */}
-      <div className="bg-white border-b border-slate-100">
-        <div className="max-w-6xl mx-auto px-6 py-6">
-          <div>
-          <button
-            onClick={onBack || (() => window.history.back())}
-            className="inline-flex items-center gap-1.5 text-slate-500 hover:text-blue-600 text-sm font-semibold transition-colors mb-4"
-          >
-            <ChevronLeft size={16} />
-            Back
-          </button>
-          <h1 className="text-3xl font-bold text-slate-900">My Appointments</h1>
-          <p className="text-slate-400 text-sm mt-1">
-            View and manage patient bookings
-          </p>
-          </div>
-          <ProfileDropdown/>
-        </div>
-      </div>
+     <div className="bg-white border-b border-slate-100">
+  <div className="max-w-6xl mx-auto px-6 py-6 flex items-start justify-between">
+    
+    {/* Left Section */}
+    <div>
+      <button
+        onClick={onBack || (() => window.history.back())}
+        className="inline-flex items-center gap-1.5 text-slate-500 hover:text-blue-600 text-sm font-semibold transition-colors mb-4"
+      >
+        <ChevronLeft size={16} />
+        Back
+      </button>
+
+      <h1 className="text-3xl font-bold text-slate-900">
+        My Appointments
+      </h1>
+
+      <p className="text-slate-400 text-sm mt-1">
+        View and manage patient bookings
+      </p>
+    </div>
+
+    {/* Right Section */}
+    <div>
+      <ProfileDropdown />
+    </div>
+
+  </div>
+</div>
 
       <div className="max-w-6xl mx-auto px-6 py-8">
         {/* ── Stats ── */}

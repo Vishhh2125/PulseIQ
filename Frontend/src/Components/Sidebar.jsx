@@ -55,7 +55,7 @@ const NAV_GROUPS = [
     label: "Appointments",
     items: [
       { id: "appointment", label: "Book Appointment", icon: Stethoscope, path: "/appointment-booking" },
-      { id: "doctor-appt", label: "Doctor View", icon: CalendarCheck, path: "/doctor/appointments" },
+    
     ],
   },
 ];
