@@ -108,22 +108,11 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(registerUser.fulfilled, (state, action) => {
-<<<<<<< HEAD
-  state.isLoading = false;
-  state.user = action.payload.user;
-  state.error = null;
-
-  if (action.payload.accessToken) {
-    localStorage.setItem("accessToken", action.payload.accessToken);
-  }
-})
-=======
         state.isLoading = false;
         state.user = action.payload.user;
         localStorage.setItem('user', JSON.stringify(action.payload.user)); // save user
         state.error = null;
       })
->>>>>>> d3fcc7b9035696fc42f3d13d8f73e4d9bb1db877
       .addCase(registerUser.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;
@@ -158,23 +147,11 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(login.fulfilled, (state, action) => {
-<<<<<<< HEAD
-  state.isLoading = false;
-  state.user = action.payload.user;
-  state.error = null;
-
-  // ✅ SAVE TOKEN
-  if (action.payload.accessToken) {
-    localStorage.setItem("accessToken", action.payload.accessToken);
-  }
-})
-=======
         state.isLoading = false;
         state.user = action.payload.user;
         localStorage.setItem('user', JSON.stringify(action.payload.user)); // save user
         state.error = null;
       })
->>>>>>> d3fcc7b9035696fc42f3d13d8f73e4d9bb1db877
       .addCase(login.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload;

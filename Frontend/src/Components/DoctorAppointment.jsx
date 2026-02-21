@@ -188,7 +188,7 @@ export default function DoctorAppointment({ onBack }) {
             View and manage patient bookings
           </p>
           </div>
-          <ProfileDropdown />
+          <ProfileDropdown/>
         </div>
       </div>
 

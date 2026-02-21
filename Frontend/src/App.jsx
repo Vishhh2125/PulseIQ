@@ -75,14 +75,7 @@ function App() {
         }
       />
       {/* Appointment Booking */}
-      <Route
-        path="/appointment"
-        element={
-          <PatientRoute>
-            <AppointmentBooking onBack={() => window.history.back()} />
-          </PatientRoute>
-        }
-      />
+      
 
       {/* Medication Adherence Assistant */}
       <Route
