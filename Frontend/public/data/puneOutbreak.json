@@ -1,0 +1,93 @@
+{
+  "city": "Pune",
+  "lastUpdated": "2026-02",
+  "alerts": [
+    {
+      "disease": "Dengue",
+      "riskLevel": "High",
+      "season": "Monsoon",
+      "cases": {
+        "suspected": 264,
+        "confirmed": 12
+      },
+      "affectedAreas": [
+        "Shivajinagar",
+        "Sinhagad Road",
+        "Hadapsar",
+        "Kothrud",
+        "Wakad"
+      ],
+      "causes": [
+        "Stagnant water",
+        "High humidity",
+        "Mosquito breeding"
+      ],
+      "prevention": [
+        "Avoid water stagnation",
+        "Use mosquito repellent",
+        "Wear full-sleeve clothing"
+      ]
+    },
+    {
+      "disease": "Chikungunya",
+      "riskLevel": "Moderate",
+      "season": "Monsoon",
+      "cases": {
+        "confirmed": 41
+      },
+      "affectedAreas": [
+        "Aundh",
+        "Baner",
+        "Pimple Saudagar"
+      ],
+      "causes": [
+        "Mosquito breeding",
+        "Urban water logging"
+      ],
+      "prevention": [
+        "Use mosquito nets",
+        "Keep surroundings dry"
+      ]
+    },
+    {
+      "disease": "Malaria",
+      "riskLevel": "Low",
+      "season": "Monsoon",
+      "cases": {
+        "confirmed": 5
+      },
+      "affectedAreas": [
+        "Industrial areas",
+        "Construction zones"
+      ],
+      "causes": [
+        "Stagnant water",
+        "Poor drainage"
+      ],
+      "prevention": [
+        "Drain standing water",
+        "Use insect repellents"
+      ]
+    },
+    {
+      "disease": "Swine Flu",
+      "riskLevel": "Moderate",
+      "season": "Winter",
+      "cases": {
+        "trend": "Seasonal rise"
+      },
+      "affectedAreas": [
+        "Citywide"
+      ],
+      "causes": [
+        "Cold weather",
+        "Crowded indoor spaces"
+      ],
+      "prevention": [
+        "Wear masks",
+        "Maintain hygiene",
+        "Avoid crowded places"
+      ]
+    }
+  ]
+}

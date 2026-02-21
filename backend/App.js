@@ -53,12 +53,16 @@ import doctorRouter from "./routes/doctor.route.js";
 import appointmentRouter from "./routes/appointment.route.js";
 import fitnessRouter from "./routes/fitness.route.js";
 import assessmentRouter from "./routes/assessment.route.js";
+import skinDetectionRouter from "./routes/skinDetection.route.js";
+import carePlanRouter from "./routes/carePlan.route.js";
 
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/doctors", doctorRouter);
 app.use("/api/v1/appointments", appointmentRouter);
 app.use("/", fitnessRouter);
 app.use("/api", assessmentRouter);
+app.use("/api/v1/skin-detection", skinDetectionRouter);
+app.use("/api/v1/care-plan", carePlanRouter);
 
 app.get("/test", (req, res) => {
   res.send("PulseIQ API is working");

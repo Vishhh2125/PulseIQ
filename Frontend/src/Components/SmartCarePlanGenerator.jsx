@@ -1,12 +1,15 @@
 "use client";
 
 import React, { useState } from 'react';
+import axios from 'axios';
 import { 
   Heart, User, Calendar, Pill, Dumbbell, UtensilsCrossed, 
   AlertTriangle, CheckCircle, Clock, Activity, Stethoscope,
   Brain, Shield, Target, FileText, Loader, Download, 
   TrendingUp, Bell, Info
 } from 'lucide-react';
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
 const SmartCarePlanGenerator = () => {
   const [patientData, setPatientData] = useState({
@@ -41,172 +44,35 @@ const SmartCarePlanGenerator = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState('');
 
-  const GEMINI_API_KEY = 'AIzaSyBYREgrU-RxJR4dfPqh36o2jk6Bf5dL05A'; // Replace with your actual API key
-
   const generateCarePlan = async () => {
     if (!patientData.primaryDiagnosis || !patientData.age) {
       setError('Please fill in at least the primary diagnosis and age');
       return;
     }
 
-    // Check if API key is placeholder
-    if (GEMINI_API_KEY === 'YOUR_ACTUAL_GEMINI_API_KEY_HERE') {
-      setError('Please replace the GEMINI_API_KEY with your actual API key from Google AI Studio');
-      return;
-    }
-
     setIsGenerating(true);
     setError('');
 
-    const prompt = `You are a medical AI assistant. Based on the following patient information, generate a comprehensive, evidence-based care plan.
-
-Patient Information:
-- Age: ${patientData.age}
-- Gender: ${patientData.gender}
-- Weight: ${patientData.weight} kg
-- Height: ${patientData.height} cm
-- Primary Diagnosis: ${patientData.primaryDiagnosis}
-- Secondary Conditions: ${patientData.secondaryConditions}
-- Current Medications: ${patientData.currentMedications}
-- Allergies: ${patientData.allergies}
-- Activity Level: ${patientData.activityLevel}
-- Smoking Status: ${patientData.smokingStatus}
-- Alcohol Consumption: ${patientData.alcoholConsumption}
-- Sleep Hours: ${patientData.sleepHours}
-- Stress Level: ${patientData.stressLevel}
-- Dietary Restrictions: ${patientData.dietaryRestrictions}
-
-Please provide a JSON response with this exact structure:
-{
-  "medications": [
-    {
-      "name": "medication name",
-      "dosage": "dosage amount",
-      "frequency": "frequency",
-      "duration": "treatment duration",
-      "instructions": "special instructions",
-      "priority": "high"
-    }
-  ],
-  "exercises": [
-    {
-      "type": "exercise type",
-      "description": "detailed description",
-      "duration": "time duration",
-      "frequency": "how often",
-      "intensity": "moderate",
-      "precautions": "safety notes"
-    }
-  ],
-  "diet": [
-    {
-      "category": "category name",
-      "recommendation": "specific recommendation",
-      "foods_to_include": ["food1", "food2"],
-      "foods_to_avoid": ["food1", "food2"],
-      "reasoning": "medical reasoning"
-    }
-  ],
-  "lifestyle": [
-    {
-      "area": "lifestyle area",
-      "recommendation": "specific recommendation",
-      "importance": "high",
-      "timeline": "when to implement"
-    }
-  ],
-  "monitoring": [
-    {
-      "parameter": "what to monitor",
-      "frequency": "how often",
-      "target_range": "normal range",
-      "method": "how to measure"
-    }
-  ],
-  "followUp": [
-    {
-      "specialist": "type of doctor",
-      "timeframe": "when to schedule",
-      "purpose": "reason for visit"
-    }
-  ],
-  "warnings": [
-    {
-      "type": "warning type",
-      "description": "detailed warning",
-      "severity": "medium"
-    }
-  ],
-  "summary": "Brief overview of the care plan and key priorities"
-}
-
-Base your recommendations on current clinical guidelines and evidence-based medicine. Consider drug interactions, contraindications, and patient preferences.`;
-
     try {
-      const response = await fetch(
-  `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      contents: [
+      const response = await axios.post(
+        `${API_BASE_URL}/care-plan/generate`,
+        { patientData },
         {
-          role: "user",
-          parts: [{ text: prompt }]
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+          },
         }
-      ]
-    })
-  }
-);
+      );
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('API Error Response:', errorText);
-        throw new Error(`API request failed: ${response.status} - ${errorText}`);
-      }
-
-      const data = await response.json();
-      
-      if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-        throw new Error('Invalid response structure from Gemini API');
-      }
-
-      const generatedText = data.candidates[0].content.parts[0].text;
-      console.log('Generated text:', generatedText);
-      
-      // Extract JSON from the response - more robust parsing
-      let jsonString = generatedText;
-      
-      // Remove markdown code blocks if present
-      jsonString = jsonString.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-      
-      // Find JSON object
-      const jsonMatch = jsonString.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        try {
-          const carePlanData = JSON.parse(jsonMatch[0]);
-          setCarePlan(carePlanData);
-        } catch (parseError) {
-          console.error('JSON Parse Error:', parseError);
-          throw new Error('Unable to parse JSON response from AI');
-        }
-      } else {
-        console.error('No JSON found in response:', generatedText);
-        throw new Error('No valid JSON found in AI response');
-      }
-    } catch (err) {
-      console.error('Error generating care plan:', err);
-      if (err.message.includes('404')) {
-        setError('API endpoint not found. Please check your API key and ensure it\'s valid for Gemini API access.');
-      } else if (err.message.includes('403')) {
-        setError('Access forbidden. Please check your API key permissions and billing status.');
-      } else if (err.message.includes('429') || err.message.includes('RESOURCE_EXHAUSTED') || err.message.includes('quota')) {
-        setError('Rate limit reached (free tier). Please wait about 1 minute and try again. You can also check usage at https://ai.dev/rate-limit');
-      } else {
-        setError(`Failed to generate care plan: ${err.message}`);
-      }
+      const data = response.data.data;
+      setCarePlan(data);
+    } catch (error) {
+      console.error('Error generating care plan:', error);
+      const errorMessage =
+        error.response?.data?.message ||
+        error.message ||
+        'Failed to generate care plan. Please try again.';
+      setError(errorMessage);
     } finally {
       setIsGenerating(false);
     }

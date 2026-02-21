@@ -1,105 +1,80 @@
 "use client";
 
 import React, { useState } from "react";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { motion, AnimatePresence } from "framer-motion";
 import { Camera, Sparkles, Upload, CheckCircle2, AlertCircle, ScanFace } from "lucide-react";
+import axios from "axios";
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api/v1';
 
 const SkinDetection = () => {
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(false);
-
-  const genAI = new GoogleGenerativeAI(
-    import.meta.env.VITE_GEMINI_API_KEY
-  );
+  const [error, setError] = useState(null);
 
   const handleChange = (file) => {
     if (!file) return;
 
     if (file.size > 4 * 1024 * 1024) {
-      alert("Image must be under 4MB");
+      setError("Image must be under 4MB");
       return;
     }
 
     setImage(file);
     setPreview(URL.createObjectURL(file));
     setAnalysis(null);
+    setError(null);
   };
 
-  const fileToGenerativePart = async (file) => {
-    const base64 = await new Promise((resolve, reject) => {
+  const fileToBase64 = async (file) => {
+    return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onloadend = () => resolve(reader.result.split(",")[1]);
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
-
-    return {
-      inlineData: {
-        data: base64,
-        mimeType: file.type,
-      },
-    };
   };
 
   const handleAnalyze = async () => {
     if (!image) return;
 
     setLoading(true);
+    setError(null);
 
     try {
-      const model = genAI.getGenerativeModel({
-        model: "gemini-2.5-flash",
-      });
+      const imageBase64 = await fileToBase64(image);
 
-      const imagePart = await fileToGenerativePart(image);
-
-      const response = await model.generateContent([
-        imagePart,
+      const response = await axios.post(
+        `${API_BASE_URL}/skin-detection/analyze`,
         {
-          text: `
-Analyze this skin image and respond in the following STRICT format:
-
-Observation:
-<One paragraph describing what is visible>
-
-Explanation:
-<One paragraph explaining what it might indicate>
-
-Possible Causes:
-- cause 1
-- cause 2
-- cause 3
-
-Use simple, non-medical language.
-Do not add extra sections.
-`,
+          imageBase64,
+          mimeType: image.type,
         },
-      ]);
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
+          },
+        }
+      );
 
-      const text = response.response.text();
+      const responseData = response.data.data;
 
-      const observation =
-        text.split("Observation:")[1]?.split("Explanation:")[0]?.trim() || "";
-
-      const explanation =
-        text.split("Explanation:")[1]?.split("Possible Causes:")[0]?.trim() || "";
-
-      const causesText =
-        text.split("Possible Causes:")[1]?.trim() || "";
-
-      const causes = causesText
-        .split("\n")
-        .map((c) => c.replace("-", "").trim())
-        .filter(Boolean);
-
-      setAnalysis({ observation, explanation, causes });
-
+      setAnalysis({
+        observation: responseData.observation,
+        explanation: responseData.explanation,
+        causes: responseData.causes,
+        recommendations: responseData.recommendations,
+      });
     } catch (err) {
-      console.error(err);
-      alert("Error analyzing image. Check console.");
+      console.error("Error analyzing image:", err);
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        "Error analyzing image. Please try again.";
+      setError(errorMessage);
+      setAnalysis(null);
     }
 
     setLoading(false);
@@ -373,7 +348,7 @@ Do not add extra sections.
                       <p className="text-gray-700 leading-relaxed">{analysis.explanation}</p>
                     </div>
                     
-                    {analysis.causes.length > 0 && (
+                    {analysis.causes && analysis.causes.length > 0 && (
                       <>
                         <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
                         
@@ -396,7 +371,51 @@ Do not add extra sections.
                         </div>
                       </>
                     )}
+
+                    {analysis.recommendations && analysis.recommendations.length > 0 && (
+                      <>
+                        <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+                        
+                        <div>
+                          <h4 className="font-semibold text-gray-900 mb-3 text-sm uppercase tracking-wide">Recommendations</h4>
+                          <ul className="space-y-2">
+                            {analysis.recommendations.map((rec, i) => (
+                              <motion.li 
+                                key={i}
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: i * 0.1 }}
+                                className="flex items-start gap-3 text-gray-700"
+                              >
+                                <span className="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">✓</span>
+                                <span>{rec}</span>
+                              </motion.li>
+                            ))}
+                          </ul>
+                        </div>
+                      </>
+                    )}
+
+                    <div className="mt-4 p-3 bg-amber-50/80 border border-amber-200/50 rounded-lg text-xs text-amber-900">
+                      <strong>⚠️ Disclaimer:</strong> This analysis is for educational purposes only. Always consult a healthcare professional for medical advice.
+                    </div>
                   </div>
+                </motion.div>
+              )}
+
+              {error && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -30 }}
+                  transition={{ duration: 0.5 }}
+                  className="mt-8 bg-red-50/80 backdrop-blur-xl border border-red-200 rounded-2xl p-6 shadow-lg"
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <AlertCircle size={24} className="text-red-600" />
+                    <h3 className="text-lg font-bold text-red-900">Analysis Error</h3>
+                  </div>
+                  <p className="text-red-700 text-sm">{error}</p>
                 </motion.div>
               )}
             </AnimatePresence>
